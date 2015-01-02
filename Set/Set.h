@@ -395,7 +395,7 @@ namespace set {
                 if (data[i] == t) {
                     
                     filter.remove(t);
-                    std::rotate(begin()+i, begin()+i+1, end());
+                    std::rotate(ibegin()+i, ibegin()+i+1, iend());
                     
                     data[last].~T();
                     
@@ -423,11 +423,12 @@ namespace set {
             return const_iterator(data, data+last+1);
         }
         
+    private:
         /**
          Return the iterator, pointing at the first element
          @returns the iterator
          */
-        iterator begin() {
+        iterator ibegin() {
             return iterator(data);
         }
         
@@ -435,11 +436,10 @@ namespace set {
          Return the iterator, pointing at the last element
          @returns the iterator
          */
-        iterator end() {
+        iterator iend() {
             return iterator(data, data+last+1);
         }
         
-    private:
         /**
          Grows the size of the buffer exponentially
          @exception bad_alloc if the allocation isn't successfull
