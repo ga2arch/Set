@@ -51,29 +51,29 @@ class Set {
         }
         
         // Operatore di iterazione post-incremento
-        const_iterator& operator++(int) {
-            const_iterator save = *this;
+        const_iterator operator++(int) {
+            auto tmp(*this);
             ++pos;
-            return save;
+            return tmp;
         }
         
         // Operatore di iterazione pre-incremento
-        const_iterator operator++() {
+        const_iterator& operator++() {
             ++pos;
-            return const_iterator(data, pos);
+            return *this;
         }
         
         // Operatore di iterazione post-decremento
-        const_iterator& operator--(int) {
-            const_iterator save = *this;
+        const_iterator operator--(int) {
+            auto tmp(*this);
             --pos;
-            return save;
+            return tmp;
         }
         
         // Operatore di iterazione pre-decremento
-        const_iterator operator--() {
+        const_iterator& operator--() {
             --pos;
-            return const_iterator(data, pos);
+            return *this;
         }
         
         // Spostamentio in avanti della posizione
