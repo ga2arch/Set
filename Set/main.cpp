@@ -52,9 +52,7 @@ class Set {
         
         // Operatore di iterazione post-incremento
         const_iterator operator++(int) {
-            auto tmp(*this);
-            ++pos;
-            return tmp;
+            return const_iterator(data, pos++);
         }
         
         // Operatore di iterazione pre-incremento
@@ -65,9 +63,7 @@ class Set {
         
         // Operatore di iterazione post-decremento
         const_iterator operator--(int) {
-            auto tmp(*this);
-            --pos;
-            return tmp;
+            return const_iterator(data, pos--);
         }
         
         // Operatore di iterazione pre-decremento
@@ -152,6 +148,13 @@ public:
             insert(e);
     }
     
+    /**
+     Constructor from generic iterators
+     
+     @param begin first element of the iterator
+     @param end last element of the iterator
+     @returns class instance
+     */
     template <typename Iterator>
     Set(Iterator begin, Iterator end) {
         for (;begin != end; begin++)
@@ -168,7 +171,7 @@ public:
         return data[p];
     }
     
-    void insert(const T& t) {
+    void insert(const T t) {
         for (int i=0; i <= last; i++)
             if (data[i] == t)
                 throw std::runtime_error("Error, element already present");
@@ -177,17 +180,6 @@ public:
         
         data[last] = t;
     }
-    
-    void insert(T&& t) {
-        for (int i=0; i <= last; i++)
-            if (data[i] == t)
-                throw std::runtime_error("Error, element already present");
-        
-        resize(++last);
-        
-        data[last] = std::move(t);
-    }
-
     
     void remove(const T t) {
         for (int i=0; i <= last; i++) {
