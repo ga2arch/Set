@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <vector>
+#include <cassert>
 
 template <typename T>
 class Set {
@@ -145,7 +146,7 @@ class Set {
         const_iterator(T* data_, int pos_=0): data(data_), pos(pos_) {}
         
     };
-
+    
 public:
     template <typename Iterator>
     Set(Iterator begin, Iterator end) {
@@ -167,6 +168,8 @@ public:
                 throw std::runtime_error("Error");
 
         data = (T*) realloc(data, ++count*sizeof(T));
+        assert(data);
+        
         data[count] = t;
     }
     
@@ -179,7 +182,8 @@ public:
                         data[j] = data[j+1];
                 
                 data = (T*) realloc(data, --count);
-                
+                assert(data);
+
                 return;
             }
         }
@@ -193,6 +197,14 @@ public:
     
     const_iterator end() const {
         return const_iterator(data, count+1);
+    }
+    
+    friend std::ostream& operator<<(std::ostream &os, const Set &set) {
+        for (auto e: set) {
+            os << e << " ";
+        }
+        
+        return os;
     }
     
 private:
@@ -217,4 +229,6 @@ int main(int argc, const char * argv[]) {
     for(auto e: s) {
         std::cout << e << std::endl;
     }
+    
+    std::cout << s << std::endl;
 }
