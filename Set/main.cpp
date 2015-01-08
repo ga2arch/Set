@@ -147,6 +147,10 @@ class Set {
     
 public:
     Set() =default;
+    Set(const Set& set_) {
+        for (auto e: set_)
+            insert(e);
+    }
     
     template <typename Iterator>
     Set(Iterator begin, Iterator end) {
@@ -159,29 +163,40 @@ public:
         data = nullptr;
     }
     
-    T& operator[](int p) {
-        assert(p >= 0 && p <= count);
+    const T& operator[](int p) const {
+        assert(p >= 0 && p <= last);
         return data[p];
     }
     
-    void insert(const T t) {
-        for (int i=0; i <= count; i++)
+    void insert(const T& t) {
+        for (int i=0; i <= last; i++)
             if (data[i] == t)
                 throw std::runtime_error("Error, element already present");
 
-        resize(++count);
+        resize(++last);
         
-        data[count] = t;
+        data[last] = t;
     }
     
+    void insert(T&& t) {
+        for (int i=0; i <= last; i++)
+            if (data[i] == t)
+                throw std::runtime_error("Error, element already present");
+        
+        resize(++last);
+        
+        data[last] = std::move(t);
+    }
+
+    
     void remove(const T t) {
-        for (int i=0; i <= count; i++) {
+        for (int i=0; i <= last; i++) {
             if (data[i] == t) {
                 
-                for (; i < count; i++)
+                for (; i < last; i++)
                     data[i] = std::move(data[i+1]);
                 
-                resize(--count);
+                resize(--last);
 
                 return;
             }
@@ -195,15 +210,7 @@ public:
     }
     
     const_iterator end() const {
-        return const_iterator(data, count+1);
-    }
-    
-    friend std::ostream& operator<<(std::ostream &os, const Set &set) {
-        for (auto e: set) {
-            os << e << " ";
-        }
-        
-        return os;
+        return const_iterator(data, last+1);
     }
     
 private:
@@ -216,24 +223,52 @@ private:
         data = static_cast<T*>(mem);
     }
     
+    friend std::ostream& operator<<(std::ostream &os, const Set &set) {
+        for (auto e: set) {
+            os << e << " ";
+        }
+        
+        return os;
+    }
+    
     T* data = nullptr;
-    int count = -1;
+    int last = -1;
     
 };
 
+template <typename T, typename F>
+Set<T> filter_out(const Set<T>& s, F p) {
+    Set<T> n;
+    
+    for (auto e: s) {
+        if (!p(e))
+            n.insert(e);
+    }
+    
+    return n;
+}
+
 int main(int argc, const char * argv[]) {
     Set<int> s;
-    
-    std::vector<int> l{4,3,5};
+    std::vector<int> l{4,5};
     
     s.insert(4);
+    
+    assert(s[0] == 4);
+    
     s.insert(3);
     s.insert(5);
-    
-//    Set<int> s(l.begin(), l.end());
-    
+
     s.remove(3);
-    s[10];
-    for (auto e: s)
-        std::cout << e << std::endl;
+    
+    assert(s[1] == 5);
+    
+    for (int i=0; i < 2; i++) {
+        assert(l[i] == s[i]);
+    }
+    
+    auto n = filter_out(s, [](int t){ return t == 4; });
+    
+    assert(n[0] == 5);
+    
 }
