@@ -9,6 +9,8 @@
 #include <iostream>
 #include <vector>
 #include <cassert>
+#include <cstddef>
+#include <stdexcept>
 
 template <typename T>
 class Set {
@@ -158,6 +160,7 @@ public:
     }
     
     T& operator[](int p) {
+        assert(p >= 0 && p <= count);
         return data[p];
     }
     
@@ -166,7 +169,7 @@ public:
             if (data[i] == t)
                 throw std::runtime_error("Error, element already present");
 
-        resize(++count*sizeof(T));
+        resize(++count);
         
         data[count] = t;
     }
@@ -175,9 +178,8 @@ public:
         for (int i=0; i <= count; i++) {
             if (data[i] == t) {
                 
-                if (i < count)
-                    for (int j=i; j < count; j++)
-                        data[j] = data[j+1];
+                for (; i < count; i++)
+                    data[i] = std::move(data[i+1]);
                 
                 resize(--count);
 
@@ -205,8 +207,9 @@ public:
     }
     
 private:
-    void resize(size_t size) {
-        auto mem = std::realloc(data, size);
+    void resize(int size) {
+        assert(size >= 0);
+        auto mem = std::realloc(data, (size+1)*sizeof(T));
         if (!mem)
             throw std::bad_alloc();
         
@@ -230,7 +233,7 @@ int main(int argc, const char * argv[]) {
 //    Set<int> s(l.begin(), l.end());
     
     s.remove(3);
-    
+    s[10];
     for (auto e: s)
         std::cout << e << std::endl;
 }
