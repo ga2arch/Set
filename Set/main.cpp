@@ -25,72 +25,72 @@ class Set {
         typedef const T&                        reference;
         
         const_iterator(const const_iterator &other) {
+            base = other.base;
             data = other.data;
-            pos = other.pos;
         }
         
         const_iterator& operator=(const const_iterator &other) {
+            base = other.base;
             data = other.data;
-            pos = other.pos;
             return *this;
         }
         
         // Ritorna il dato riferito dall'iteratore (dereferenziamento)
         reference operator*() const {
-            return data[pos];
+            return *data;
         }
         
         // Ritorna il puntatore al dato riferito dall'iteratore
         pointer operator->() const {
-            return data+pos;
+            return data;
         }
         
         // Operatore di accesso random
         reference operator[](int index) {
-            return &*data[index];
+            return &*base[index];
         }
         
         // Operatore di iterazione post-incremento
         const_iterator operator++(int) {
-            return const_iterator(data, pos++);
+            return const_iterator(base, data++);
         }
         
         // Operatore di iterazione pre-incremento
         const_iterator& operator++() {
-            ++pos;
+            ++data;
             return *this;
         }
         
         // Operatore di iterazione post-decremento
         const_iterator operator--(int) {
-            return const_iterator(data, pos--);
+            return const_iterator(base, data--);
         }
         
         // Operatore di iterazione pre-decremento
         const_iterator& operator--() {
-            --pos;
+            --data;
             return *this;
         }
         
         // Spostamentio in avanti della posizione
         const_iterator operator+(int offset) {
-            return const_iterator(data, pos+offset);
+            return const_iterator(base, data+offset);
         }
         
         // Spostamentio all'indietro della posizione
         const_iterator operator-(int offset) {
-            return const_iterator(data, pos-offset);
+            return const_iterator(base, data-offset);
         }
         
         // Spostamentio in avanti della posizione
         const_iterator& operator+=(int offset) {
-            pos += offset;
+            data += offset;
             return *this;
         }
         
         // Spostamentio all'indietro della posizione
         const_iterator& operator-=(int offset) {
-            pos -= offset;
+            data -= offset;
             return *this;
         }
         
@@ -102,42 +102,43 @@ class Set {
         
         // Uguaglianza
         bool operator==(const const_iterator &other) const {
-            return data == other.data && pos == other.pos;
+            return data == other.data;
         }
         
         // Diversita'
         bool operator!=(const const_iterator &other) const {
-            return data != other.data || pos != other.pos;
+            return data != other.data;
         }
         
         // Confronto
         bool operator>(const const_iterator &other) const {
-            return data > other.data && pos > other.pos;
+            return data > other.data;
         }
         
         
         bool operator>=(const const_iterator &other) const {
-            return data >= other.data && pos >= other.pos;
+            return data >= other.data;
         }
         
         // Confronto
         bool operator<(const const_iterator &other) const {
-            return data < other.data && pos < other.pos;
+            return data < other.data;
         }
         
         
         // Confronto
         bool operator<=(const const_iterator &other) const {
-            return data <= other.data && pos <= other.pos;
+            return data <= other.data;
         }
         
     private:
+        T* base;
         T* data;
-        int pos = 0;
         
         friend class Set;
 
-        const_iterator(T* data_, int pos_=0): data(data_), pos(pos_) {}
+        const_iterator(T* base_, T* data_): base(base_), data(data_) {}
+        const_iterator(T* data_): base(data_), data(data_) {}
         
     };
     
@@ -202,7 +203,7 @@ public:
     }
     
     const_iterator end() const {
-        return const_iterator(data, last+1);
+        return const_iterator(data, data+last+1);
     }
     
 private:
@@ -255,12 +256,13 @@ int main(int argc, const char * argv[]) {
     
     assert(s[1] == 5);
     
+    
     for (int i=0; i < 2; i++) {
         assert(l[i] == s[i]);
     }
     
     auto n = filter_out(s, [](int t){ return t == 4; });
     
-    assert(n[0] == 5);
+    std::cout << s;
     
 }
