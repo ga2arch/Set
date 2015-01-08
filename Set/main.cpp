@@ -40,7 +40,7 @@ class Set {
         
         // Ritorna il puntatore al dato riferito dall'iteratore
         pointer operator->() const {
-            return data[pos];
+            return data+pos;
         }
         
         // Operatore di accesso random
@@ -49,7 +49,7 @@ class Set {
         }
         
         // Operatore di iterazione post-incremento
-        const_iterator &operator++(int) {
+        const_iterator& operator++(int) {
             const_iterator save = *this;
             ++pos;
             return save;
@@ -58,11 +58,11 @@ class Set {
         // Operatore di iterazione pre-incremento
         const_iterator operator++() {
             ++pos;
-            return *this;
+            return const_iterator(data, pos);
         }
         
         // Operatore di iterazione post-decremento
-        const_iterator &operator--(int) {
+        const_iterator& operator--(int) {
             const_iterator save = *this;
             --pos;
             return save;
@@ -71,21 +71,17 @@ class Set {
         // Operatore di iterazione pre-decremento
         const_iterator operator--() {
             --pos;
-            return *this;
+            return const_iterator(data, pos);
         }
         
         // Spostamentio in avanti della posizione
         const_iterator operator+(int offset) {
-            const_iterator save = *this;
-            pos += offset;
-            return save;
+            return const_iterator(data, pos+offset);
         }
         
         // Spostamentio all'indietro della posizione
         const_iterator operator-(int offset) {
-            const_iterator save = *this;
-            pos -= offset;
-            return save;
+            return const_iterator(data, pos-offset);
         }
         
         // Spostamentio in avanti della posizione
@@ -148,6 +144,8 @@ class Set {
     };
     
 public:
+    Set() =default;
+    
     template <typename Iterator>
     Set(Iterator begin, Iterator end) {
         for (;begin != end; begin++)
@@ -214,21 +212,18 @@ private:
 };
 
 int main(int argc, const char * argv[]) {
-    //Set<int> s;
+    Set<int> s;
     
     std::vector<int> l{4,3,5};
     
-//    s.insert(4);
-//    s.insert(3);
-//    s.insert(5);
+    s.insert(4);
+    s.insert(3);
+    s.insert(5);
     
-    Set<int> s(l.begin(), l.end());
+//    Set<int> s(l.begin(), l.end());
     
     s.remove(3);
     
-    for(auto e: s) {
+    for (auto e: s)
         std::cout << e << std::endl;
-    }
-    
-    std::cout << s << std::endl;
 }
