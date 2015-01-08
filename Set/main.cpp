@@ -153,7 +153,8 @@ public:
     }
     
     ~Set() {
-        delete[] data;
+        std::free(data);
+        data = nullptr;
     }
     
     T& operator[](int p) {
@@ -163,10 +164,9 @@ public:
     void insert(const T t) {
         for (int i=0; i <= count; i++)
             if (data[i] == t)
-                throw std::runtime_error("Error");
+                throw std::runtime_error("Error, element already present");
 
-        data = (T*) realloc(data, ++count*sizeof(T));
-        assert(data);
+        resize(++count*sizeof(T));
         
         data[count] = t;
     }
@@ -179,8 +179,7 @@ public:
                     for (int j=i; j < count; j++)
                         data[j] = data[j+1];
                 
-                data = (T*) realloc(data, --count);
-                assert(data);
+                resize(--count);
 
                 return;
             }
@@ -206,6 +205,14 @@ public:
     }
     
 private:
+    void resize(size_t size) {
+        auto mem = std::realloc(data, size);
+        if (!mem)
+            throw std::bad_alloc();
+        
+        data = static_cast<T*>(mem);
+    }
+    
     T* data = nullptr;
     int count = -1;
     
