@@ -177,7 +177,8 @@ public:
             if (data[i] == t)
                 throw std::runtime_error("Error, element already present");
 
-        resize(++last);
+        if (++last == size)
+            grow();
         
         data[last] = t;
     }
@@ -189,8 +190,9 @@ public:
                 for (; i < last; i++)
                     data[i] = std::move(data[i+1]);
                 
-                resize(--last);
-
+                if (--last < size/2)
+                    shrink();
+                
                 return;
             }
         }
@@ -207,9 +209,20 @@ public:
     }
     
 private:
-    void resize(int size) {
-        assert(size >= 0);
-        auto mem = std::realloc(data, (size+1)*sizeof(T));
+    void grow() {
+        if (size) size *= 1.5;
+        else size = 1;
+        
+        alloc(size);
+    }
+    
+    void shrink() {
+        size /= 2;
+        alloc(size);
+    }
+    
+    void alloc(size_t s) {
+        auto mem = std::realloc(data, s*sizeof(T));
         if (!mem)
             throw std::bad_alloc();
         
@@ -226,6 +239,7 @@ private:
     
     T* data = nullptr;
     int last = -1;
+    size_t size = 0;
     
 };
 
@@ -255,7 +269,6 @@ int main(int argc, const char * argv[]) {
     s.remove(3);
     
     assert(s[1] == 5);
-    
     
     for (int i=0; i < 2; i++) {
         assert(l[i] == s[i]);
