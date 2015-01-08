@@ -162,11 +162,6 @@ public:
             insert(*begin);
     }
     
-    ~Set() {
-        std::free(data);
-        data = nullptr;
-    }
-    
     const T& operator[](int p) const {
         assert(p >= 0 && p <= last);
         return data[p];
