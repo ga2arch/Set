@@ -21,24 +21,36 @@ inline size_t hash_combine(const T& t, size_t seed) {
 }
 
 template <typename T>
-class BloomFilter {
+class Base {
+public:
+    virtual void add(const T t) { }
+    
+    virtual bool query(const T t) {
+        return true;
+    }
+    
+    virtual void remove(const T t) { }
+    
+};
+
+template <typename T, size_t SIZE = 1000, size_t K = 5>
+class BloomFilter: public Base<T> {
     
 public:
-    
-    void add(const T t) {
-        for (int i=0; i < 5; i++)
+    void add(const T t) override {
+        for (int i=0; i < K; i++)
             bloom[hash(t, i)]++;
     }
     
-    bool query(const T t) {
-        for (int i=0; i < 5; i++)
+    bool query(const T t) override {
+        for (int i=0; i < K; i++)
             if (!bloom[hash(t, i)]) return false;
         
         return true;
     }
     
-    void remove(const T t) {
-        for (int i=0; i < 5; i++)
+    void remove(const T t) override {
+        for (int i=0; i < K; i++)
             bloom[hash(t, i)]--;
     }
     
@@ -47,15 +59,14 @@ private:
         auto h1 = hash_combine(t, 0);
         auto h2 = hash_combine(t, h1);
         
-        return (h1 + i*h2) % 64;
+        return (h1 + i*h2) % SIZE;
     }
     
-    int bloom[64] = { 0 };
+    std::unique_ptr<int[]> bloom = std::unique_ptr<int[]>(new int[SIZE]);
     std::hash<T> hashfn;
 };
 
-
-template <typename T>
+template <typename T, class Checker = BloomFilter<T>>
 class Set {
     
     class const_iterator;
@@ -384,6 +395,8 @@ class Set {
         
     };
     
+    Checker checker;
+    
 public:
     Set() =default;
     
@@ -422,8 +435,8 @@ public:
     }
     
     /**
-     Perform an insertion of an element into the Set, it checks first the bloom
-     filter, if the query is negative, procedes with the insertion, if positive 
+     Perform an insertion of an element into the Set, it checks first the Checker, 
+     if the query is negative, procedes with the insertion, if positive
      it checks for the existence of the element (could be a false positive) and
      eventually performs the insertion.
      @param t the element
@@ -431,13 +444,13 @@ public:
      @exception runtime_error if the elements is already present in the Set.
      */
     void insert(const T t) {
-        if (bloom.query(t)) {
+        if (checker.query(t)) {
             for (int i=0; i <= last; i++)
                 if (data[i] == t)
                     throw std::runtime_error("Error, element already present");
         }
         
-        bloom.add(t);
+        checker.add(t);
         if (++last == size)
             grow();
         
@@ -445,7 +458,7 @@ public:
     }
     
     /**
-     Remove and element from the Set, it checks first the bloom filter, if the 
+     Remove and element from the Set, it checks first the Checker, if the
      query is negative, throws an exception, if positive, search the element.
      If the element is found, use std::rotate to perform a left rotation, effectively 
      moving the element to remove at the end of the Set but outside the valid range.
@@ -454,13 +467,13 @@ public:
      @exception runtime_error if the element is not found in the Set.
      */
     void remove(const T t) {
-        if (!bloom.query(t))
+        if (!checker.query(t))
             throw std::runtime_error("Element not found");
 
         for (int i=0; i <= last; i++) {
             if (data[i] == t) {
                 
-                bloom.remove(t);
+                checker.remove(t);
                 std::rotate(begin()+i, begin()+i+1, end());
                 
                 if (--last < size/2)
@@ -551,7 +564,6 @@ private:
         return os;
     }
     
-    BloomFilter<T> bloom;
     T* data = nullptr;
     int last = -1;
     size_t size = 0;
@@ -559,9 +571,9 @@ private:
 };
 
 
-template <typename T, typename F>
-Set<T> filter_out(const Set<T>& s, F p) {
-    Set<T> n;
+template <typename T, typename C, typename F>
+Set<T,C> filter_out(const Set<T,C>& s, F p) {
+    Set<T,C> n;
     
     for (auto e: s) {
         if (!p(e))
@@ -571,27 +583,44 @@ Set<T> filter_out(const Set<T>& s, F p) {
     return n;
 }
 
-
-int main(int argc, const char * argv[]) {
-    Set<int> s;
-    std::vector<int> l{4,5};
+class Zap {
+public:
+    int x = 0;
     
-    s.insert(4);
-    
-    assert(s[0] == 4);
-    
-    s.insert(3);
-    s.insert(5);
-    
-    s.remove(3);
-    
-    assert(s[1] == 5);
-    
-    for (int i=0; i < 2; i++) {
-        assert(l[i] == s[i]);
+    bool operator==(const Zap& z) {
+        return x == z.x;
     }
     
-    auto n = filter_out(s, [](int t){ return t == 4; });
+    friend std::ostream& operator<<(std::ostream &os, const Zap& z) {
+        os << z.x << " ";
+        return os;
+    }
+    
+};
+
+int main(int argc, const char * argv[]) {
+    Set<Zap, Base<Zap>> s;
+//    std::vector<int> l{4,5};
+//    
+//    s.insert(4);
+//    
+//    assert(s[0] == 4);
+//    
+//    s.insert(3);
+//    s.insert(5);
+//    
+//    s.remove(3);
+//    
+//    assert(s[1] == 5);
+//    
+//    for (int i=0; i < 2; i++) {
+//        assert(l[i] == s[i]);
+//    }
+//    
+//    auto n = filter_out(s, [](int t){ return t == 4; });
+//
+    auto z = Zap();
+    s.insert(z);
     
     std::cout << s;
 }
