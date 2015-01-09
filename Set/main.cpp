@@ -12,6 +12,11 @@
 #include <cstddef>
 #include <stdexcept>
 
+/**
+ Combine two hashes
+ @param t element to hash
+ @returns size_t hashed value
+ */
 template <typename T>
 inline size_t hash_combine(const T& t, size_t seed) {
     std::hash<T> hashfn;
@@ -37,11 +42,21 @@ template <typename T, size_t SIZE = 1000, size_t K = 5>
 class BloomFilter: public Base<T> {
     
 public:
+    /**
+     Add the value t to the bloomfilter
+     @param t value to add
+     */
     void add(const T t) override {
         for (int i=0; i < K; i++)
             bloom[hash(t, i)]++;
     }
     
+    /**
+     Query the value t, if the query is FALSE, the element is NOT in the bloomfilter,
+     if the query is TRUE, the element COULD be in the bloomfilter.
+     @param t value to query
+     @return bool query result
+     */
     bool query(const T t) override {
         for (int i=0; i < K; i++)
             if (!bloom[hash(t, i)]) return false;
@@ -49,12 +64,26 @@ public:
         return true;
     }
     
+    /**
+     Remove the value t to the bloomfilter
+     @param t value to remove
+     */
     void remove(const T t) override {
         for (int i=0; i < K; i++)
             bloom[hash(t, i)]--;
     }
     
 private:
+    /**
+     Hash the value passed by the i-th hash function and reduce it in the range
+     0 <= hash < SIZE.
+     Uses only two hash function to simulate any number of hash functions
+     based on the paper Less Hashing, Same Performance 
+     (http://www.eecs.harvard.edu/~kirsch/pubs/bbbf/esa06.pdf)
+     @param t the element to hash
+     @param i the i-th hash function
+     @returns int the hash
+     */
     int hash(const T t, int i) {
         auto h1 = hash_combine(t, 0);
         auto h2 = hash_combine(t, h1);
@@ -80,77 +109,125 @@ class Set {
         typedef T*                        pointer;
         typedef T&                        reference;
         
+        /**
+         Copy constructor
+         @param other reference to the iterator to copy.
+         */
         iterator(const iterator &other) {
             base = other.base;
             data = other.data;
         }
         
+        /**
+         Assignment
+         @param other reference to the iterator to copy.
+         */
         iterator& operator=(const iterator &other) {
             base = other.base;
             data = other.data;
             return *this;
         }
         
-        // Ritorna il dato riferito dall'iteratore (dereferenziamento)
+        /**
+         Dereference pointer
+         */
         reference operator*() const {
             return *data;
         }
         
-        // Ritorna il puntatore al dato riferito dall'iteratore
+        /**
+         Return pointer
+         @return pointer pointer to the current element.
+         */
         pointer operator->() const {
             return data;
         }
         
-        // Operatore di accesso random
+        /**
+         Return element at index
+         @return reference reference to the value if the element at index
+         */
         reference operator[](int index) {
-            return &*base[index];
+            return base[index];
         }
         
-        // Operatore di iterazione post-incremento
+        /**
+         Post-increment operator;
+         @return iterator not incremented;
+         */
         iterator operator++(int) {
             return iterator(base, data++);
         }
         
-        // Operatore di iterazione pre-incremento
+        /**
+         Pre-increment operator;
+         @return iterator incremented;
+         */
         iterator& operator++() {
             ++data;
             return *this;
         }
         
-        // Operatore di iterazione post-decremento
+        /**
+         Post-decrement operator;
+         @return iterator not decremented;
+         */
         iterator operator--(int) {
             return iterator(base, data--);
         }
         
-        // Operatore di iterazione pre-decremento
+        /**
+         Pre-decrement operator;
+         @return iterator decremented;
+         */
         iterator& operator--() {
             --data;
             return *this;
         }
         
-        // Spostamentio in avanti della posizione
+        /**
+         Advance operator;
+         @param offset how much to advance
+         @return iterator not advanced by offset;
+         */
         iterator operator+(int offset) {
             return iterator(base, data+offset);
         }
         
-        // Spostamentio all'indietro della posizione
+        /**
+         Recede operator;
+         @param offset how much to recede
+         @return iterator not receded by offset;
+         */
         iterator operator-(int offset) {
             return iterator(base, data-offset);
         }
         
-        // Spostamentio in avanti della posizione
+        /**
+         Advance operator;
+         @param offset how much to advance
+         @return iterator advanced by offset;
+         */
         iterator& operator+=(int offset) {
             data += offset;
             return *this;
         }
         
-        // Spostamentio all'indietro della posizione
+        /**
+         Recede operator;
+         @param offset how much to recede
+         @return iterator receded by offset;
+         */
         iterator& operator-=(int offset) {
             data -= offset;
             return *this;
         }
         
-        // Numero di elementi tra due iteratori
+        /**
+         Difference operator;
+         @param iterator reference to the other iterator
+         @return difference_type how many elements between this and other iterator
+         */
         difference_type operator-(const iterator &other) {
             difference_type diff = data - other.data;
             return diff;
@@ -171,7 +248,6 @@ class Set {
             return data > other.data;
         }
         
-        
         bool operator>=(const iterator &other) const {
             return data >= other.data;
         }
@@ -180,7 +256,6 @@ class Set {
         bool operator<(const iterator &other) const {
             return data < other.data;
         }
-        
         
         // Confronto
         bool operator<=(const iterator &other) const {
@@ -203,7 +278,6 @@ class Set {
         bool operator>(const const_iterator &other) const {
             return data > other.data;
         }
-        
         
         bool operator>=(const const_iterator &other) const {
             return data >= other.data;
@@ -554,7 +628,10 @@ private:
     }
     
     /**
-     Comodity function to easily display the contento of a Set.
+     Comodity function to easily display the content of a Set.
+     @param os stream to write on
+     @param set reference of the set to write
+     @return os output stream
      */
     friend std::ostream& operator<<(std::ostream &os, const Set &set) {
         for (auto e: set) {
@@ -599,28 +676,27 @@ public:
 };
 
 int main(int argc, const char * argv[]) {
-    Set<Zap, Base<Zap>> s;
-//    std::vector<int> l{4,5};
-//    
-//    s.insert(4);
-//    
-//    assert(s[0] == 4);
-//    
-//    s.insert(3);
-//    s.insert(5);
-//    
-//    s.remove(3);
-//    
-//    assert(s[1] == 5);
-//    
-//    for (int i=0; i < 2; i++) {
-//        assert(l[i] == s[i]);
-//    }
-//    
-//    auto n = filter_out(s, [](int t){ return t == 4; });
-//
-    auto z = Zap();
-    s.insert(z);
+    Set<int, Base<int>> s;
+    std::vector<int> l{4,5};
+    
+    s.insert(4);
+    
+    assert(s[0] == 4);
+    
+    s.insert(3);
+    s.insert(5);
+    
+    s.remove(3);
+    
+    assert(s[1] == 5);
+    
+    for (int i=0; i < 2; i++) {
+        assert(l[i] == s[i]);
+    }
+    
+    auto n = filter_out(s, [](int t){ return t == 4; });
+
+    std::cout << s.begin()[1];
     
     std::cout << s;
 }
