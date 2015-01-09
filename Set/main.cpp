@@ -17,10 +17,19 @@
 #include <cstddef>
 #include <stdexcept>
 
+/**
+ Custom exception thrown in the case one tries to insert an element
+ already present in the set.
+ */
 struct already_in: public std::runtime_error {
     already_in(): std::runtime_error("Element already in set") {}
 };
 
+
+/**
+ Custom exception thrown in the case one tries to delete an element
+ no found in the set.
+ */
 struct not_found: public std::runtime_error {
     not_found(): std::runtime_error("Element not found") {}
 };
@@ -38,14 +47,24 @@ inline size_t hash_combine(const T& t, size_t seed) {
     return seed;
 }
 
+/**
+ Enumerator class to rappresent the results of a Query
+ */
+enum class Query { FOUND, NOT_FOUND, MAYBE };
+
+/**
+ Class that implements a BasicFilter, it always returns a MAYBE when queried 
+ for a value, forcing the Set class to linear search the Set for the element.
+ */
 class BaseFilter {
+    
 public:
     template <typename T>
     void add(const T t) { }
 
     template <typename T>
-    bool query(const T t) {
-        return true;
+    Query query(const T t) {
+        return Query::MAYBE;
     }
 
     template <typename T>
@@ -53,8 +72,16 @@ public:
     
 };
 
+/**
+ Class that implements a BloomFilter for O(1) check if an element is NOT present
+ into the Set. Query could return false-positive, that's why in the event the element
+ is found it returns MAYBE.
+
+ @param SIZE the size of the bloomfilter array
+ @param K the number of hashing functions
+ */
 template <size_t SIZE = 1000, size_t K = 5>
-class BloomFilter {
+class BloomFilter: public BaseFilter {
 
 public:
     BloomFilter(): bloom(std::unique_ptr<uint8_t[]>(new uint8_t[SIZE])) {};
@@ -70,18 +97,18 @@ public:
     }
     
     /**
-     Query the value t, if the query is FALSE, the element is NOT in the bloomfilter,
-     if the query is TRUE, the element COULD be in the bloomfilter.
+     Query the value t, if the query is NOT_FOUND, the element is NOT in the bloomfilter,
+     if the query is MAYBE, the element COULD be in the bloomfilter.
      @param t value to query
-     @returns bool query result
+     @returns Query query result
      */
     
     template <typename T>
-    bool query(const T t) {
+    Query query(const T t) {
         for (int i=0; i < K; i++)
-            if (!bloom[hash(t, i)]) return false;
+            if (!bloom[hash(t, i)]) return Query::NOT_FOUND;
         
-        return true;
+        return Query::MAYBE;
     }
     
     /**
@@ -118,6 +145,13 @@ private:
     std::unique_ptr<uint8_t[]> bloom;
 };
 
+/**
+ Class that implement a Set-like structure, with random access in O(1), orderer insertion,
+ and custom lookup filter.
+ 
+ @param T the type of the values inside the Set
+ @param F the filter to use, defaulted to BloomFilter
+ */
 template <typename T, class F = BloomFilter<>>
 class Set {
     
@@ -256,17 +290,25 @@ class Set {
             return diff;
         }
         
-        // Uguaglianza
+        /**
+         Equality operator, check if two iterator are the same.
+         @param other reference to the other iterator
+         @returns if the two iterators are equal
+         */
         bool operator==(const iterator &other) const {
-            return data == other.data;
+            return data == other.data && base == other.base;
         }
         
-        // Diversita'
+        /**
+         Inequality operator, check if two iterator are NOT the same.
+         @param other reference to the other iterator
+         @returns if the two iterators are NOT equal
+         */
         bool operator!=(const iterator &other) const {
-            return data != other.data;
+            return data != other.data && base != other.base;
         }
         
-        // Confronto
+        
         bool operator>(const iterator &other) const {
             return data > other.data;
         }
@@ -542,11 +584,15 @@ public:
      @exception already_in() if the elements is already present in the Set.
      */
     void insert(const T t) {
-        if (filter.query(t)) {
+        auto query = filter.query(t);
+        if (query == Query::MAYBE) {
+            
             for (int i=0; i <= last; i++)
                 if (data[i] == t)
                     throw already_in();
-        }
+
+        } else if (query == Query::FOUND)
+            throw already_in();
         
         filter.add(t);
         if (++last == size)
@@ -565,7 +611,8 @@ public:
      @exception not_found() if the element is not found in the Set.
      */
     void remove(const T t) {
-        if (!filter.query(t))
+        auto query = filter.query(t);
+        if (query == Query::NOT_FOUND)
             throw not_found();
 
         for (int i=0; i <= last; i++) {
@@ -593,7 +640,7 @@ public:
     }
     
     /**
-     Return the const_iterator, pointing at the last element
+     Return the const_iterator, pointing at the element after the last
      @returns the const_iterator
      */
     const_iterator end() const {
