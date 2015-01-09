@@ -6,6 +6,11 @@
 //  Copyright (c) 2015 Gabriele Carrettoni. All rights reserved.
 //
 
+/**
+ @file
+ @brief main
+ */
+
 #include <iostream>
 #include <vector>
 #include <cassert>
@@ -23,7 +28,7 @@ struct not_found: public std::runtime_error {
 /**
  Combine two hashes
  @param t element to hash
- @returns size_t hashed value
+ @returns hashed value
  */
 template <typename T>
 inline size_t hash_combine(const T& t, size_t seed) {
@@ -50,6 +55,7 @@ template <typename T, size_t SIZE = 1000, size_t K = 5>
 class BloomFilter: public Base<T> {
     
 public:
+    BloomFilter(): bloom(std::unique_ptr<uint8_t[]>(new uint8_t[SIZE])) {};
     /**
      Add the value t to the bloomfilter
      @param t value to add
@@ -63,7 +69,7 @@ public:
      Query the value t, if the query is FALSE, the element is NOT in the bloomfilter,
      if the query is TRUE, the element COULD be in the bloomfilter.
      @param t value to query
-     @return bool query result
+     @returns bool query result
      */
     bool query(const T t) override {
         for (int i=0; i < K; i++)
@@ -99,7 +105,7 @@ private:
         return (h1 + i*h2) % SIZE;
     }
     
-    std::unique_ptr<int[]> bloom = std::unique_ptr<int[]>(new int[SIZE]);
+    std::unique_ptr<uint8_t[]> bloom;
     std::hash<T> hashfn;
 };
 
@@ -145,7 +151,7 @@ class Set {
         
         /**
          Return pointer
-         @return pointer pointer to the current element.
+         @returns pointer to the current element.
          */
         pointer operator->() const {
             return data;
@@ -153,7 +159,7 @@ class Set {
         
         /**
          Return element at index
-         @return reference reference to the value if the element at index
+         @returns reference to the value if the element at index
          */
         reference operator[](int index) {
             return base[index];
@@ -161,7 +167,7 @@ class Set {
         
         /**
          Post-increment operator;
-         @return iterator not incremented;
+         @returns iterator not incremented;
          */
         iterator operator++(int) {
             return iterator(base, data++);
@@ -169,7 +175,7 @@ class Set {
         
         /**
          Pre-increment operator;
-         @return iterator incremented;
+         @returns iterator incremented;
          */
         iterator& operator++() {
             ++data;
@@ -178,7 +184,7 @@ class Set {
         
         /**
          Post-decrement operator;
-         @return iterator not decremented;
+         @returns iterator not decremented;
          */
         iterator operator--(int) {
             return iterator(base, data--);
@@ -186,7 +192,7 @@ class Set {
         
         /**
          Pre-decrement operator;
-         @return iterator decremented;
+         @returns iterator decremented;
          */
         iterator& operator--() {
             --data;
@@ -196,7 +202,7 @@ class Set {
         /**
          Advance operator;
          @param offset how much to advance
-         @return iterator not advanced by offset;
+         @returns iterator not advanced by offset;
          */
         iterator operator+(int offset) {
             return iterator(base, data+offset);
@@ -205,7 +211,7 @@ class Set {
         /**
          Recede operator;
          @param offset how much to recede
-         @return iterator not receded by offset;
+         @returns iterator not receded by offset;
          */
         iterator operator-(int offset) {
             return iterator(base, data-offset);
@@ -214,7 +220,7 @@ class Set {
         /**
          Advance operator;
          @param offset how much to advance
-         @return iterator advanced by offset;
+         @returns iterator advanced by offset;
          */
         iterator& operator+=(int offset) {
             data += offset;
@@ -224,7 +230,7 @@ class Set {
         /**
          Recede operator;
          @param offset how much to recede
-         @return iterator receded by offset;
+         @returns iterator receded by offset;
          */
         iterator& operator-=(int offset) {
             data -= offset;
@@ -234,7 +240,7 @@ class Set {
         /**
          Difference operator;
          @param iterator reference to the other iterator
-         @return difference_type how many elements between this and other iterator
+         @returns how many elements between this and other iterator
          */
         difference_type operator-(const iterator &other) {
             difference_type diff = data - other.data;
@@ -512,7 +518,7 @@ public:
     /**
      Subscribe operator to access element by index in costant time
      @param p the index of the element to retrieve
-     @returns T& const reference of the element
+     @returns const reference to the element
      @exception assert exception if p is outside the valide range
      */
     const T& operator[](int p) const {
@@ -526,8 +532,7 @@ public:
      it checks for the existence of the element (could be a false positive) and
      eventually performs the insertion.
      @param t the element
-     @returns void
-     @exception runtime_error if the elements is already present in the Set.
+     @exception already_in() if the elements is already present in the Set.
      */
     void insert(const T t) {
         if (checker.query(t)) {
@@ -550,7 +555,7 @@ public:
      moving the element to remove at the end of the Set but outside the valid range.
      @param t the element
      @returns void
-     @exception runtime_error if the element is not found in the Set.
+     @exception not_found() if the element is not found in the Set.
      */
     void remove(const T t) {
         if (!checker.query(t))
@@ -574,23 +579,23 @@ public:
     
     /**
      Return the const_iterator, pointing at the first element
-     @returns const_iterator the iterator
+     @returns the const:iterator
      */
-    const_iterator begin() const {
+    const_iterator cbegin() const {
         return const_iterator(data);
     }
     
     /**
      Return the const_iterator, pointing at the last element
-     @returns const_iterator the iterator
+     @returns the const_iterator
      */
-    const_iterator end() const {
+    const_iterator cend() const {
         return const_iterator(data, data+last+1);
     }
     
     /**
      Return the iterator, pointing at the first element
-     @returns iterator the iterator
+     @returns the iterator
      */
     iterator begin() {
         return iterator(data);
@@ -598,7 +603,7 @@ public:
     
     /**
      Return the iterator, pointing at the last element
-     @returns iterator the iterator
+     @returns the iterator
      */
     iterator end() {
         return iterator(data, data+last+1);
@@ -628,7 +633,6 @@ private:
     /**
      Realloc a chunk of memory based on the size passed.
      @param s
-     @returns void
      @exception bad_alloc if the allocation isn't successfull
      */
     void alloc(size_t s) {
@@ -643,7 +647,7 @@ private:
      Comodity function to easily display the content of a Set.
      @param os stream to write on
      @param set reference of the set to write
-     @return os output stream
+     @return output stream
      */
     friend std::ostream& operator<<(std::ostream &os, const Set &set) {
         for (auto e: set) {
@@ -665,7 +669,7 @@ private:
  predicate function passed.
  @param s the set to filter out
  @param p the function or lambda to use to filter the elements
- @returns Set the new Set
+ @returns the new Set
  */
 template <typename T, typename C, typename F>
 Set<T,C> filter_out(const Set<T,C>& s, F p) {
@@ -688,7 +692,7 @@ int main(int argc, const char * argv[]) {
     
     assert(s[0] == 4);
     
-    s.insert(4);
+    s.insert(3);
     s.insert(5);
     
     s.remove(3);
