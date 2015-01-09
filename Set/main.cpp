@@ -868,27 +868,63 @@ Set<T,F> filter_out(const Set<T,F>& s, P p) {
 }
 
 int main(int argc, const char * argv[]) {
-    Set<int, BloomFilter<1000, 10>> s;
-    std::vector<int> l{4,5};
+    Set<int> s;
+    std::vector<int> l{4,5,8,9,10};
     
+    std::cout << "Test insertion: ";
     s.insert(4);
-    
-    assert(s[0] == 4);
-    
-    s.insert(3);
     s.insert(5);
+    s.insert(8);
+    s.insert(9);
+    s.insert(10);
     
-    s.remove(3);
+    assert(std::equal(s.begin(), s.end(), l.begin()));
+    std::cout << "PASSED\n";
     
-    assert(s[1] == 5);
+    std::cout << "Test deletion: ";
+    s.remove(5);
     
-    for (int i=0; i < 2; i++) {
-        assert(l[i] == s[i]);
+    l = {4,8,9,10};
+    assert(std::equal(s.begin(), s.end(), l.begin()));
+    std::cout << "PASSED\n";
+    
+    std::cout << "Test random access: ";
+    assert(s[1] == l[1]);
+    std::cout << "PASSED\n";
+    
+    std::cout << "Test insertion of already inserted element: ";
+    bool error = false;
+    try {
+        s.insert(4);
+    } catch (already_in) {
+        error = true;
     }
     
-    auto n = filter_out(s, [](int t){ return t == 4; });
-
-    std::cout << n;
+    assert(error);
+    std::cout << "PASSED\n";
     
-    std::cout << s;
+    std::cout << "Test deletion of element not in the Set: ";
+    error = false;
+    try {
+        s.remove(30);
+    } catch (not_found) {
+        error = true;
+    }
+    
+    assert(error);
+    std::cout << "PASSED\n";
+    
+    std::cout << "Test copy costructor: ";
+    Set<int> c(s);
+    
+    assert(std::equal(c.begin(), c.end(), s.begin()));
+    std::cout << "PASSED\n";
+    
+    std::cout << "Test costructor from iterators: ";
+    l = {4,4,8,9,10};
+    Set<int> m(l.begin(), l.end());
+    l = {4,8,9,10};
+
+    assert(std::equal(m.begin(), m.end(), s.begin()));
+    std::cout << "PASSED\n";
 }
