@@ -38,7 +38,7 @@ inline size_t hash_combine(const T& t, size_t seed) {
     return seed;
 }
 
-template <typename T>
+template <typename T, size_t... Args>
 class Filter {
 public:
     virtual void add(const T t) { }
@@ -53,9 +53,10 @@ public:
 
 template <typename T, size_t SIZE = 1000, size_t K = 5>
 class BloomFilter: public Filter<T> {
-    
+
 public:
     BloomFilter(): bloom(std::unique_ptr<uint8_t[]>(new uint8_t[SIZE])) {};
+    
     /**
      Add the value t to the bloomfilter
      @param t value to add
@@ -109,7 +110,7 @@ private:
     std::hash<T> hashfn;
 };
 
-template <typename T, class Filter>
+template <typename T, template <typename, size_t...> class Filter, size_t... Args>
 class Set {
     
     class const_iterator;
@@ -655,7 +656,7 @@ private:
         return os;
     }
     
-    Filter filter;
+    Filter<T, Args...> filter;
     T* data = nullptr;
     int last = -1;
     size_t size = 0;
@@ -670,9 +671,11 @@ private:
  @param p the function or lambda to use to filter the elements
  @returns the new Set
  */
-template <typename T, typename C, typename F>
-Set<T,C> filter_out(const Set<T,C>& s, F p) {
-    Set<T,C> n;
+template <typename T,
+          template <typename, size_t...> class F,
+          size_t... Args, typename P>
+Set<T,F,Args...> filter_out(const Set<T,F,Args...>& s, P p) {
+    Set<T,F,Args...> n;
     
     for (auto e: s) {
         if (!p(e)) {
@@ -684,7 +687,7 @@ Set<T,C> filter_out(const Set<T,C>& s, F p) {
 }
 
 int main(int argc, const char * argv[]) {
-    Set<int, Filter<int>> s;
+    Set<int, Filter> s;
     std::vector<int> l{4,5};
     
     s.insert(4);
