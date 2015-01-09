@@ -666,6 +666,9 @@ class Set {
     };
     
 public:
+    /**
+     Default constructor
+     */
     Set() =default;
     
     /**
@@ -678,8 +681,11 @@ public:
             insert(e);
     }
     
+    /**
+     Destructor, it frees up the memory used.
+     */
     ~Set() {
-        std::free(data);
+        if (data) std::free(data);
         data = nullptr;
     }
     
