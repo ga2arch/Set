@@ -13,6 +13,34 @@
 #include <stdexcept>
 
 template <typename T>
+class BloomFilter {
+    
+public:
+    void add(const T t) {
+        auto b = hash(t) % 64;
+        bloom[b]++;
+    }
+    
+    bool query(const T t) {
+        auto b = hash(t) % 64;
+        
+        if (!bloom[b]) return false;
+        
+        return true;
+    }
+    
+    void remove(const T t) {
+        auto b = hash(t) % 64;
+        bloom[b]--;
+    }
+    
+private:
+    int bloom[64] = { 0 };
+    std::hash<T> hash;
+};
+
+
+template <typename T>
 class Set {
     
     class const_iterator {
@@ -168,10 +196,13 @@ public:
     }
     
     void insert(const T t) {
-        for (int i=0; i <= last; i++)
-            if (data[i] == t)
-                throw std::runtime_error("Error, element already present");
-
+        if (bloom.query(t)) {
+            for (int i=0; i <= last; i++)
+                if (data[i] == t)
+                    throw std::runtime_error("Error, element already present");
+        }
+        
+        bloom.add(t);
         if (++last == size)
             grow();
         
@@ -179,9 +210,13 @@ public:
     }
     
     void remove(const T t) {
+        if (!bloom.query(t))
+            throw std::runtime_error("Element not found");
+
         for (int i=0; i <= last; i++) {
             if (data[i] == t) {
                 
+                bloom.remove(t);
                 for (; i < last; i++)
                     data[i] = std::move(data[i+1]);
                 
@@ -203,6 +238,8 @@ public:
         return const_iterator(data, data+last+1);
     }
     
+    BloomFilter<T> bloom;
+
 private:
     void grow() {
         if (size) size *= 1.5;
@@ -250,6 +287,7 @@ Set<T> filter_out(const Set<T>& s, F p) {
     return n;
 }
 
+
 int main(int argc, const char * argv[]) {
     Set<int> s;
     std::vector<int> l{4,5};
@@ -260,17 +298,20 @@ int main(int argc, const char * argv[]) {
     
     s.insert(3);
     s.insert(5);
-
+    
     s.remove(3);
     
-    assert(s[1] == 5);
+    //s.remove(3);
+    //s.insert(3);
+    //s.insert(0);
     
-    for (int i=0; i < 2; i++) {
-        assert(l[i] == s[i]);
-    }
-    
-    auto n = filter_out(s, [](int t){ return t == 4; });
+//    assert(s[1] == 5);
+//    
+//    for (int i=0; i < 2; i++) {
+//        assert(l[i] == s[i]);
+//    }
+//    
+//    auto n = filter_out(s, [](int t){ return t == 4; });
     
     std::cout << s;
-    
 }
