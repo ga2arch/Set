@@ -38,21 +38,23 @@ inline size_t hash_combine(const T& t, size_t seed) {
     return seed;
 }
 
-template <typename T, size_t... Args>
-class Filter {
+class BaseFilter {
 public:
-    virtual void add(const T t) { }
-    
-    virtual bool query(const T t) {
+    template <typename T>
+    void add(const T t) { }
+
+    template <typename T>
+    bool query(const T t) {
         return true;
     }
-    
-    virtual void remove(const T t) { }
+
+    template <typename T>
+    void remove(const T t) { }
     
 };
 
-template <typename T, size_t SIZE = 1000, size_t K = 5>
-class BloomFilter: public Filter<T> {
+template <size_t SIZE = 1000, size_t K = 5>
+class BloomFilter {
 
 public:
     BloomFilter(): bloom(std::unique_ptr<uint8_t[]>(new uint8_t[SIZE])) {};
@@ -61,7 +63,8 @@ public:
      Add the value t to the bloomfilter
      @param t value to add
      */
-    void add(const T t) override {
+    template <typename T>
+    void add(const T t) {
         for (int i=0; i < K; i++)
             bloom[hash(t, i)]++;
     }
@@ -72,7 +75,9 @@ public:
      @param t value to query
      @returns bool query result
      */
-    bool query(const T t) override {
+    
+    template <typename T>
+    bool query(const T t) {
         for (int i=0; i < K; i++)
             if (!bloom[hash(t, i)]) return false;
         
@@ -83,7 +88,9 @@ public:
      Remove the value t from the bloomfilter
      @param t value to remove
      */
-    void remove(const T t) override {
+    
+    template <typename T>
+    void remove(const T t) {
         for (int i=0; i < K; i++)
             bloom[hash(t, i)]--;
     }
@@ -99,6 +106,8 @@ private:
      @param i the i-th hash function
      @returns int the hash
      */
+    
+    template <typename T>
     int hash(const T t, int i) {
         auto h1 = hash_combine(t, 0);
         auto h2 = hash_combine(t, h1);
@@ -107,10 +116,9 @@ private:
     }
     
     std::unique_ptr<uint8_t[]> bloom;
-    std::hash<T> hashfn;
 };
 
-template <typename T, template <typename, size_t...> class Filter, size_t... Args>
+template <typename T, class F = BloomFilter<>>
 class Set {
     
     class const_iterator;
@@ -656,7 +664,7 @@ private:
         return os;
     }
     
-    Filter<T, Args...> filter;
+    F filter;
     T* data = nullptr;
     int last = -1;
     size_t size = 0;
@@ -671,11 +679,9 @@ private:
  @param p the function or lambda to use to filter the elements
  @returns the new Set
  */
-template <typename T,
-          template <typename, size_t...> class F,
-          size_t... Args, typename P>
-Set<T,F,Args...> filter_out(const Set<T,F,Args...>& s, P p) {
-    Set<T,F,Args...> n;
+template <typename T, class F, typename P>
+Set<T,F> filter_out(const Set<T,F>& s, P p) {
+    Set<T,F> n;
     
     for (auto e: s) {
         if (!p(e)) {
@@ -687,7 +693,7 @@ Set<T,F,Args...> filter_out(const Set<T,F,Args...>& s, P p) {
 }
 
 int main(int argc, const char * argv[]) {
-    Set<int, Filter> s;
+    Set<int, BloomFilter<1000, 10>> s;
     std::vector<int> l{4,5};
     
     s.insert(4);
