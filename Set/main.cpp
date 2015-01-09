@@ -16,6 +16,7 @@ template <typename T>
 class BloomFilter {
     
 public:
+    
     void add(const T t) {
         bloom[hash(t)]++;
     }
@@ -193,13 +194,13 @@ class Set {
         
         
     private:
-        T* base;
-        T* data;
+        pointer base;
+        pointer data;
         
         friend class Set;
         
-        iterator(T* base_, T* data_): base(base_), data(data_) {}
-        iterator(T* data_): base(data_), data(data_) {}
+        explicit iterator(T* base_, T* data_): base(base_), data(data_) {}
+        explicit iterator(T* data_): base(data_), data(data_) {}
         
     };
     
@@ -211,6 +212,11 @@ class Set {
         typedef ptrdiff_t                       difference_type;
         typedef const T*                        pointer;
         typedef const T&                        reference;
+        
+        const_iterator(const iterator &other) {
+            base = other.base;
+            data = other.data;
+        }
         
         const_iterator(const const_iterator &other) {
             base = other.base;
@@ -352,9 +358,9 @@ class Set {
         }
         
     private:
-        T* base;
-        T* data;
-        
+        pointer base;
+        pointer data;
+     
         friend class Set;
 
         const_iterator(T* base_, T* data_): base(base_), data(data_) {}
@@ -389,16 +395,25 @@ public:
     }
     
     /**
-     <#description#>
-     @param <#parameter#>
-     @returns <#retval#>
-     @exception <#throws#>
+     Subscribe operator to access element by index in costant time
+     @param p the index of the element to retrieve
+     @returns T& const reference of the element
+     @exception assert exception if p is outside the valide range
      */
     const T& operator[](int p) const {
         assert(p >= 0 && p <= last);
         return data[p];
     }
     
+    /**
+     Perform an insertion of an element into the Set, it checks first the bloom
+     filter, if the query is negative, procedes with the insertion, if positive 
+     it checks for the existence of the element (could be a false positive) and
+     eventually performs the insertion.
+     @param t the element
+     @returns void
+     @exception runtime_error if the elements is already present in the Set.
+     */
     void insert(const T t) {
         if (bloom.query(t)) {
             for (int i=0; i <= last; i++)
@@ -413,6 +428,15 @@ public:
         data[last] = t;
     }
     
+    /**
+     Remove and element from the Set, it checks first the bloom filter, if the 
+     query is negative, throws an exception, if positive, search the element.
+     If the element is found, use std::rotate to perform a left rotation, effectively 
+     moving the element to remove at the end of the Set but outside the valid range.
+     @param t the element
+     @returns void
+     @exception runtime_error if the element is not found in the Set.
+     */
     void remove(const T t) {
         if (!bloom.query(t))
             throw std::runtime_error("Element not found");
@@ -433,26 +457,43 @@ public:
         throw std::runtime_error("Element not found");
     }
     
+    /**
+     Return the const_iterator, pointing at the first element
+     @returns const_iterator the iterator
+     */
     const_iterator begin() const {
         return const_iterator(data);
     }
     
+    /**
+     Return the const_iterator, pointing at the last element
+     @returns const_iterator the iterator
+     */
     const_iterator end() const {
         return const_iterator(data, data+last+1);
     }
     
+    /**
+     Return the iterator, pointing at the first element
+     @returns iterator the iterator
+     */
     iterator begin() {
         return iterator(data);
     }
     
+    /**
+     Return the iterator, pointing at the last element
+     @returns iterator the iterator
+     */
     iterator end() {
         return iterator(data, data+last+1);
     }
 
-    
-    BloomFilter<T> bloom;
-
 private:
+    /**
+     Grows the size of the buffer exponetially
+     @exception bad_alloc if the allocation isn't successfull
+     */
     void grow() {
         if (size) size *= 1.5;
         else size = 1;
@@ -460,11 +501,21 @@ private:
         alloc(size);
     }
     
+    /**
+     Shrink the size of the buffer exponetially
+     @exception bad_alloc if the allocation isn't successfull
+     */
     void shrink() {
         size /= 1.5;
         alloc(size);
     }
     
+    /**
+     Realloc a chunk of memory based on the size passed.
+     @param s
+     @returns void
+     @exception bad_alloc if the allocation isn't successfull
+     */
     void alloc(size_t s) {
         auto mem = std::realloc(data, s*sizeof(T));
         if (!mem)
@@ -473,6 +524,9 @@ private:
         data = static_cast<T*>(mem);
     }
     
+    /**
+     Comodity function to easily display the contento of a Set.
+     */
     friend std::ostream& operator<<(std::ostream &os, const Set &set) {
         for (auto e: set) {
             os << e << " ";
@@ -481,11 +535,13 @@ private:
         return os;
     }
     
+    BloomFilter<T> bloom;
     T* data = nullptr;
     int last = -1;
     size_t size = 0;
     
 };
+
 
 template <typename T, typename F>
 Set<T> filter_out(const Set<T>& s, F p) {
