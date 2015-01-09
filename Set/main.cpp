@@ -84,10 +84,10 @@ public:
  @param K the number of hashing functions
  */
 template <size_t SIZE = 1000, size_t K = 5>
-class BloomFilter: public BaseFilter {
+class BloomFilter {
 
 public:
-    BloomFilter(): bloom(std::unique_ptr<uint8_t[]>(new uint8_t[SIZE])) {};
+    BloomFilter(): bloom(std::unique_ptr<uint8_t[]>(new uint8_t[SIZE]{})) {};
     
     /**
      Add the value t to the bloomfilter
@@ -752,9 +752,7 @@ public:
                 filter.remove(t);
                 std::rotate(begin()+i, begin()+i+1, end());
                 
-                if (--last < size/2)
-                    shrink();
-                
+                --last;
                 return;
             }
         }
@@ -803,15 +801,6 @@ private:
         if (size) size *= 2;
         else size = 1;
         
-        alloc(size);
-    }
-    
-    /**
-     Shrink the size of the buffer exponetially
-     @exception bad_alloc if the allocation isn't successfull
-     */
-    void shrink() {
-        size /= 2;
         alloc(size);
     }
     
