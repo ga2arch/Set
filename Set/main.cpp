@@ -87,7 +87,7 @@ template <size_t SIZE = 1000, size_t K = 5>
 class BloomFilter {
 
 public:
-    BloomFilter(): bloom(std::unique_ptr<uint8_t[]>(new uint8_t[SIZE]{})) {};
+    BloomFilter(): bloom(std::unique_ptr<uint8_t[]>(new uint8_t[SIZE]())) {};
     
     /**
      Add the value t to the bloomfilter
@@ -676,6 +676,11 @@ public:
     Set(const Set& set_) {
         for (auto e: set_)
             insert(e);
+    }
+    
+    ~Set() {
+        std::free(data);
+        data = nullptr;
     }
     
     /**
