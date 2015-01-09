@@ -17,31 +17,191 @@ class BloomFilter {
     
 public:
     void add(const T t) {
-        auto b = hash(t) % 64;
-        bloom[b]++;
+        bloom[hash(t)]++;
     }
     
     bool query(const T t) {
-        auto b = hash(t) % 64;
-        
-        if (!bloom[b]) return false;
-        
-        return true;
+        return bloom[hash(t)];
     }
     
     void remove(const T t) {
-        auto b = hash(t) % 64;
-        bloom[b]--;
+        bloom[hash(t)]--;
     }
     
 private:
+    int hash(const T t) {
+        return hashfn(t) % 64;
+    }
+    
     int bloom[64] = { 0 };
-    std::hash<T> hash;
+    std::hash<T> hashfn;
 };
 
 
 template <typename T>
 class Set {
+    
+    class const_iterator;
+    
+    class iterator {
+        //
+    public:
+        typedef std::random_access_iterator_tag iterator_category;
+        typedef T                               value_type;
+        typedef ptrdiff_t                       difference_type;
+        typedef T*                        pointer;
+        typedef T&                        reference;
+        
+        iterator(const iterator &other) {
+            base = other.base;
+            data = other.data;
+        }
+        
+        iterator& operator=(const iterator &other) {
+            base = other.base;
+            data = other.data;
+            return *this;
+        }
+        
+        // Ritorna il dato riferito dall'iteratore (dereferenziamento)
+        reference operator*() const {
+            return *data;
+        }
+        
+        // Ritorna il puntatore al dato riferito dall'iteratore
+        pointer operator->() const {
+            return data;
+        }
+        
+        // Operatore di accesso random
+        reference operator[](int index) {
+            return &*base[index];
+        }
+        
+        // Operatore di iterazione post-incremento
+        iterator operator++(int) {
+            return iterator(base, data++);
+        }
+        
+        // Operatore di iterazione pre-incremento
+        iterator& operator++() {
+            ++data;
+            return *this;
+        }
+        
+        // Operatore di iterazione post-decremento
+        iterator operator--(int) {
+            return iterator(base, data--);
+        }
+        
+        // Operatore di iterazione pre-decremento
+        iterator& operator--() {
+            --data;
+            return *this;
+        }
+        
+        // Spostamentio in avanti della posizione
+        iterator operator+(int offset) {
+            return iterator(base, data+offset);
+        }
+        
+        // Spostamentio all'indietro della posizione
+        iterator operator-(int offset) {
+            return iterator(base, data-offset);
+        }
+        
+        // Spostamentio in avanti della posizione
+        iterator& operator+=(int offset) {
+            data += offset;
+            return *this;
+        }
+        
+        // Spostamentio all'indietro della posizione
+        iterator& operator-=(int offset) {
+            data -= offset;
+            return *this;
+        }
+        
+        // Numero di elementi tra due iteratori
+        difference_type operator-(const iterator &other) {
+            difference_type diff = data - other.data;
+            return diff;
+        }
+        
+        // Uguaglianza
+        bool operator==(const iterator &other) const {
+            return data == other.data;
+        }
+        
+        // Diversita'
+        bool operator!=(const iterator &other) const {
+            return data != other.data;
+        }
+        
+        // Confronto
+        bool operator>(const iterator &other) const {
+            return data > other.data;
+        }
+        
+        
+        bool operator>=(const iterator &other) const {
+            return data >= other.data;
+        }
+        
+        // Confronto
+        bool operator<(const iterator &other) const {
+            return data < other.data;
+        }
+        
+        
+        // Confronto
+        bool operator<=(const iterator &other) const {
+            return data <= other.data;
+        }
+        
+        friend class const_iterator;
+        
+        // Uguaglianza
+        bool operator==(const const_iterator &other) const {
+            return data == other.data;
+        }
+        
+        // Diversita'
+        bool operator!=(const const_iterator &other) const {
+            return data != other.data;
+        }
+        
+        // Confronto
+        bool operator>(const const_iterator &other) const {
+            return data > other.data;
+        }
+        
+        
+        bool operator>=(const const_iterator &other) const {
+            return data >= other.data;
+        }
+        
+        // Confronto
+        bool operator<(const const_iterator &other) const {
+            return data < other.data;
+        }
+        
+        // Confronto
+        bool operator<=(const const_iterator &other) const {
+            return data <= other.data;
+        }
+        
+        
+    private:
+        T* base;
+        T* data;
+        
+        friend class Set;
+        
+        iterator(T* base_, T* data_): base(base_), data(data_) {}
+        iterator(T* data_): base(data_), data(data_) {}
+        
+    };
     
     class const_iterator {
         //
@@ -159,6 +319,38 @@ class Set {
             return data <= other.data;
         }
         
+        friend class iterator;
+        
+        // Uguaglianza
+        bool operator==(const iterator &other) const {
+            return data == other.data;
+        }
+        
+        // Diversita'
+        bool operator!=(const iterator &other) const {
+            return data != other.data;
+        }
+        
+        // Confronto
+        bool operator>(const iterator &other) const {
+            return data > other.data;
+        }
+        
+        
+        bool operator>=(const iterator &other) const {
+            return data >= other.data;
+        }
+        
+        // Confronto
+        bool operator<(const iterator &other) const {
+            return data < other.data;
+        }
+        
+        // Confronto
+        bool operator<=(const iterator &other) const {
+            return data <= other.data;
+        }
+        
     private:
         T* base;
         T* data;
@@ -172,6 +364,12 @@ class Set {
     
 public:
     Set() =default;
+    
+    /**
+     Copy constructor, performs a deep copy of all the elements in the other Set
+     @param Set& reference to the set to copy
+     @returns class instance
+     */
     Set(const Set& set_) {
         for (auto e: set_)
             insert(e);
@@ -190,6 +388,12 @@ public:
             insert(*begin);
     }
     
+    /**
+     <#description#>
+     @param <#parameter#>
+     @returns <#retval#>
+     @exception <#throws#>
+     */
     const T& operator[](int p) const {
         assert(p >= 0 && p <= last);
         return data[p];
@@ -217,8 +421,7 @@ public:
             if (data[i] == t) {
                 
                 bloom.remove(t);
-                for (; i < last; i++)
-                    data[i] = std::move(data[i+1]);
+                std::rotate(begin()+i, begin()+i+1, end());
                 
                 if (--last < size/2)
                     shrink();
@@ -238,6 +441,15 @@ public:
         return const_iterator(data, data+last+1);
     }
     
+    iterator begin() {
+        return iterator(data);
+    }
+    
+    iterator end() {
+        return iterator(data, data+last+1);
+    }
+
+    
     BloomFilter<T> bloom;
 
 private:
@@ -249,7 +461,7 @@ private:
     }
     
     void shrink() {
-        size /= 2;
+        size /= 1.5;
         alloc(size);
     }
     
@@ -301,17 +513,13 @@ int main(int argc, const char * argv[]) {
     
     s.remove(3);
     
-    //s.remove(3);
-    //s.insert(3);
-    //s.insert(0);
+    assert(s[1] == 5);
     
-//    assert(s[1] == 5);
-//    
-//    for (int i=0; i < 2; i++) {
-//        assert(l[i] == s[i]);
-//    }
-//    
-//    auto n = filter_out(s, [](int t){ return t == 4; });
+    for (int i=0; i < 2; i++) {
+        assert(l[i] == s[i]);
+    }
+    
+    auto n = filter_out(s, [](int t){ return t == 4; });
     
     std::cout << s;
 }
