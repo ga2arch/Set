@@ -39,7 +39,7 @@ inline size_t hash_combine(const T& t, size_t seed) {
 }
 
 template <typename T>
-class Base {
+class Filter {
 public:
     virtual void add(const T t) { }
     
@@ -52,7 +52,7 @@ public:
 };
 
 template <typename T, size_t SIZE = 1000, size_t K = 5>
-class BloomFilter: public Base<T> {
+class BloomFilter: public Filter<T> {
     
 public:
     BloomFilter(): bloom(std::unique_ptr<uint8_t[]>(new uint8_t[SIZE])) {};
@@ -109,7 +109,7 @@ private:
     std::hash<T> hashfn;
 };
 
-template <typename T, class Checker = BloomFilter<T>>
+template <typename T, class Filter>
 class Set {
     
     class const_iterator;
@@ -483,8 +483,6 @@ class Set {
         
     };
     
-    Checker checker;
-    
 public:
     Set() =default;
     
@@ -535,13 +533,13 @@ public:
      @exception already_in() if the elements is already present in the Set.
      */
     void insert(const T t) {
-        if (checker.query(t)) {
+        if (filter.query(t)) {
             for (int i=0; i <= last; i++)
                 if (data[i] == t)
                     throw already_in();
         }
         
-        checker.add(t);
+        filter.add(t);
         if (++last == size)
             grow();
         
@@ -558,13 +556,13 @@ public:
      @exception not_found() if the element is not found in the Set.
      */
     void remove(const T t) {
-        if (!checker.query(t))
+        if (!filter.query(t))
             throw not_found();
 
         for (int i=0; i <= last; i++) {
             if (data[i] == t) {
                 
-                checker.remove(t);
+                filter.remove(t);
                 std::rotate(begin()+i, begin()+i+1, end());
                 
                 if (--last < size/2)
@@ -581,7 +579,7 @@ public:
      Return the const_iterator, pointing at the first element
      @returns the const:iterator
      */
-    const_iterator cbegin() const {
+    const_iterator begin() const {
         return const_iterator(data);
     }
     
@@ -589,7 +587,7 @@ public:
      Return the const_iterator, pointing at the last element
      @returns the const_iterator
      */
-    const_iterator cend() const {
+    const_iterator end() const {
         return const_iterator(data, data+last+1);
     }
     
@@ -657,6 +655,7 @@ private:
         return os;
     }
     
+    Filter filter;
     T* data = nullptr;
     int last = -1;
     size_t size = 0;
@@ -685,7 +684,7 @@ Set<T,C> filter_out(const Set<T,C>& s, F p) {
 }
 
 int main(int argc, const char * argv[]) {
-    Set<int, Base<int>> s;
+    Set<int, Filter<int>> s;
     std::vector<int> l{4,5};
     
     s.insert(4);
