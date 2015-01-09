@@ -917,17 +917,25 @@ int main(int argc, const char * argv[]) {
     assert(error);
     std::cout << "PASSED\n";
     
-    std::cout << "Test copy costructor: ";
+    std::cout << "Test copy constructor: ";
     Set<int> c(s);
     
     assert(std::equal(c.begin(), c.end(), s.begin()));
     std::cout << "PASSED\n";
     
-    std::cout << "Test costructor from iterators: ";
+    std::cout << "Test constructor from iterators: ";
     l = {4,4,8,9,10};
     Set<int> m(l.begin(), l.end());
     l = {4,8,9,10};
 
     assert(std::equal(m.begin(), m.end(), s.begin()));
     std::cout << "PASSED\n";
+    
+    std::cout << "Test filter out: ";
+    auto f = filter_out(s, [](int x) { return x == 4; });
+    l = {8,9,10};
+    
+    assert(std::equal(f.begin(), f.end(), l.begin()));
+    std::cout << "PASSED\n";
+    
 }
