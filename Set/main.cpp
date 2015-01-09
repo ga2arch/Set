@@ -13,25 +13,41 @@
 #include <stdexcept>
 
 template <typename T>
+inline size_t hash_combine(const T& t, size_t seed) {
+    std::hash<T> hashfn;
+    seed ^= hashfn(t) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    
+    return seed;
+}
+
+template <typename T>
 class BloomFilter {
     
 public:
     
     void add(const T t) {
-        bloom[hash(t)]++;
+        for (int i=0; i < 5; i++)
+            bloom[hash(t, i)]++;
     }
     
     bool query(const T t) {
-        return bloom[hash(t)];
+        for (int i=0; i < 5; i++)
+            if (!bloom[hash(t, i)]) return false;
+        
+        return true;
     }
     
     void remove(const T t) {
-        bloom[hash(t)]--;
+        for (int i=0; i < 5; i++)
+            bloom[hash(t, i)]--;
     }
     
 private:
-    int hash(const T t) {
-        return hashfn(t) % 64;
+    int hash(const T t, int i) {
+        auto h1 = hash_combine(t, 0);
+        auto h2 = hash_combine(t, h1);
+        
+        return (h1 + i*h2) % 64;
     }
     
     int bloom[64] = { 0 };
