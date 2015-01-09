@@ -12,6 +12,14 @@
 #include <cstddef>
 #include <stdexcept>
 
+struct already_in: public std::runtime_error {
+    already_in(): std::runtime_error("Element already in set") {}
+};
+
+struct not_found: public std::runtime_error {
+    not_found(): std::runtime_error("Element not found") {}
+};
+
 /**
  Combine two hashes
  @param t element to hash
@@ -65,7 +73,7 @@ public:
     }
     
     /**
-     Remove the value t to the bloomfilter
+     Remove the value t from the bloomfilter
      @param t value to remove
      */
     void remove(const T t) override {
@@ -494,7 +502,11 @@ public:
     template <typename Iterator>
     Set(Iterator begin, Iterator end) {
         for (;begin != end; begin++)
-            insert(*begin);
+            try {
+                insert(*begin);
+            } catch (std::runtime_error) {
+                
+            }
     }
     
     /**
@@ -521,7 +533,7 @@ public:
         if (checker.query(t)) {
             for (int i=0; i <= last; i++)
                 if (data[i] == t)
-                    throw std::runtime_error("Error, element already present");
+                    throw already_in();
         }
         
         checker.add(t);
@@ -542,7 +554,7 @@ public:
      */
     void remove(const T t) {
         if (!checker.query(t))
-            throw std::runtime_error("Element not found");
+            throw not_found();
 
         for (int i=0; i <= last; i++) {
             if (data[i] == t) {
@@ -557,7 +569,7 @@ public:
             }
         }
         
-        throw std::runtime_error("Element not found");
+        throw not_found();
     }
     
     /**
@@ -648,32 +660,25 @@ private:
 };
 
 
+/**
+ Create a new Set from a Set filtering out the elements that pass the 
+ predicate function passed.
+ @param s the set to filter out
+ @param p the function or lambda to use to filter the elements
+ @returns Set the new Set
+ */
 template <typename T, typename C, typename F>
 Set<T,C> filter_out(const Set<T,C>& s, F p) {
     Set<T,C> n;
     
     for (auto e: s) {
-        if (!p(e))
+        if (!p(e)) {
             n.insert(e);
+        }
     }
     
     return n;
 }
-
-class Zap {
-public:
-    int x = 0;
-    
-    bool operator==(const Zap& z) {
-        return x == z.x;
-    }
-    
-    friend std::ostream& operator<<(std::ostream &os, const Zap& z) {
-        os << z.x << " ";
-        return os;
-    }
-    
-};
 
 int main(int argc, const char * argv[]) {
     Set<int, Base<int>> s;
@@ -683,7 +688,7 @@ int main(int argc, const char * argv[]) {
     
     assert(s[0] == 4);
     
-    s.insert(3);
+    s.insert(4);
     s.insert(5);
     
     s.remove(3);
@@ -696,7 +701,7 @@ int main(int argc, const char * argv[]) {
     
     auto n = filter_out(s, [](int t){ return t == 4; });
 
-    std::cout << s.begin()[1];
+    std::cout << n;
     
     std::cout << s;
 }
