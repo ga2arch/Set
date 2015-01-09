@@ -610,7 +610,7 @@ private:
      @exception bad_alloc if the allocation isn't successfull
      */
     void grow() {
-        if (size) size *= 1.5;
+        if (size) size *= 2;
         else size = 1;
         
         alloc(size);
@@ -621,7 +621,7 @@ private:
      @exception bad_alloc if the allocation isn't successfull
      */
     void shrink() {
-        size /= 1.5;
+        size /= 2;
         alloc(size);
     }
     
