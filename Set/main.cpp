@@ -60,12 +60,12 @@ inline size_t hash_combine(const T& t, size_t seed) {
  @param i the i-th hash function
  @returns int the hash
  */
-template <typename T, size_t SIZE>
-size_t hash(const T t, int i=0) {
-    auto h1 = hash_combine(t, 0);
+template <typename T>
+size_t hash(const T t, size_t size, int i=0, size_t seed=0) {
+    auto h1 = hash_combine(t, seed);
     auto h2 = hash_combine(t, h1);
     
-    return (h1 + i*h2) % SIZE;
+    return (h1 + i*h2) % size;
 }
 
 
@@ -111,7 +111,7 @@ public:
      */
     void add(const T t) {
         for (int i=0; i < K; i++)
-            bloom[hash<T,SIZE>(t, i)]++;
+            bloom[hash(t, SIZE, i)]++;
     }
     
     /**
@@ -122,7 +122,7 @@ public:
      */
     Query query(const T t) {
         for (int i=0; i < K; i++)
-            if (!bloom[hash<T,SIZE>(t, i)]) return Query::NOT_FOUND;
+            if (!bloom[hash(t, SIZE, i)]) return Query::NOT_FOUND;
         
         return Query::MAYBE;
     }
@@ -133,7 +133,7 @@ public:
      */
     void remove(const T t) {
         for (int i=0; i < K; i++)
-            bloom[hash<T,SIZE>(t, i)]--;
+            bloom[hash(t, SIZE, i)]--;
     }
     
 private:
@@ -144,35 +144,42 @@ template <typename T, size_t SIZE = 1000, size_t K = 3>
 class CuckooTable {
     
 public:
-    CuckooTable(): table(std::unique_ptr<Node[]>(new Node[SIZE]())) {}
+    CuckooTable(): table(std::unique_ptr<Nest[]>(new Nest[SIZE]())) {}
     
-    void add(const T t) {
+    void add(const T t, int i=0, int depth=0) {
         if (query(t) == Query::FOUND) return;
         
-        auto h = hash<T,SIZE>(t, 0);
-        for (int k=0; k < K; ++k) {
+        size_t h;
+        for (int k=i; k < K; k++) {
+            h = hash(t, size, k, seed);
+
             if (!table[h].full) {
-                table[h].insert(t);
+                table[h].insert(t, k+1);
                 
                 return;
             }
-            h = hash<T,SIZE>(t, k);
         }
         
-        auto node = table[h];
-        table[h].swap(t);
+        if (depth == 6) {
+            reindex(h);
+            return;
+        }
         
-        add(node.t);
+        auto index = hash(t, size, 0, seed);
+        auto node = table[index];
+        table[index].swap(t);
+        
+        add(node.t, node.i, ++depth);
     }
     
     void remove(const T t) {
         if (query(t) == Query::NOT_FOUND) return;
         
         for (int k=0; k < K; k++) {
-            auto h = hash<T,SIZE>(t, 0);
+            auto h = hash(t, size, 0, seed);
             
             if (table[h].t == t) {
-                table[h] = Node();
+                table[h] = Nest();
                 
                 return;
             }
@@ -181,7 +188,7 @@ public:
     
     Query query(const T t) {
         for (int k=0; k < K; k++) {
-            auto h = hash<T,SIZE>(t, 0);
+            auto h = hash(t, size, 0, seed);
             
             if (table[h].t == t) return Query::FOUND;
         }
@@ -189,19 +196,35 @@ public:
         return Query::NOT_FOUND;
     }
     
-    
 private:
+    void reindex(size_t seed_) {
+        auto old_table = std::move(table);
+        auto old_size = size;
+        
+        size *= 2;
+        seed = seed_;
+        table = std::unique_ptr<Nest[]>(new Nest[size]());
+        
+        for (int i=0; i < old_size; i++) {
+            auto t = old_table[i].t;
+            
+            add(t);
+        }
+    }
     
-    struct Node {
+    struct Nest {
         T t;
-        bool full = false;
+        uint i;
+        bool full;
         
-        Node() =default;
+        Nest(): full(false) {};
         
-        void insert(const T t_) {
+        void insert(const T t_, uint i_) {
             assert(!full);
-            t = t_;
             full = true;
+            
+            t = t_;
+            i = i_;
         }
         
         void swap(const T t_) {
@@ -210,8 +233,9 @@ private:
         }
     };
     
-    std::unique_ptr<Node[]> table;
-    
+    size_t seed = 0;
+    size_t size = SIZE;
+    std::unique_ptr<Nest[]> table;
 };
 
 /**
@@ -1002,4 +1026,12 @@ int main(int argc, const char * argv[]) {
     
     assert(std::equal(f.begin(), f.end(), l.begin()));
     std::cout << "PASSED\n";
+    
+    
+    CuckooTable<int, 1000, 2> ct;
+    
+    for (int i=0; i < 3000; i++)
+        ct.add(i);
+    
+    std::cout << (ct.query(800) == Query::FOUND ? "1" : "0");
 }
