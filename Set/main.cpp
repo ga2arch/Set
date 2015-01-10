@@ -870,7 +870,7 @@ Set<T,F> filter_out(const Set<T,F>& s, P p) {
 }
 
 template <typename T, size_t SIZE = 1000, size_t K = 3>
-class CuckoTable {
+class CuckooTable {
     
 public:
     void add(const T t) {
@@ -879,7 +879,7 @@ public:
         auto h = hash<T,SIZE>(t, 0);
         for (int k=0; k < K; ++k) {
             if (!table[h]) {
-                table[h] = new T(t);
+                table[h] = std::unique_ptr<T>(new T(t));
                 
                 return;
             }
@@ -918,12 +918,12 @@ public:
     
     
 private:
-    T* table[SIZE] = {};
+    std::unique_ptr<T> table[SIZE] = {};
 };
 
 
 int main(int argc, const char * argv[]) {
-    Set<int, CuckoTable<int>> s;
+    Set<int, CuckooTable<int>> s;
     std::vector<int> l{4,5,8,9,10};
     
     std::cout << "Test insertion: ";
