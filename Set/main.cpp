@@ -140,7 +140,11 @@ private:
     std::unique_ptr<uint8_t[]> bloom;
 };
 
-template <typename T, size_t SIZE = 1000, size_t K = 2, size_t STASH_SIZE = 2>
+template <typename T,
+          size_t SIZE = 1000,
+          size_t K = 2,
+          size_t STASH_SIZE = 2,
+          size_t MAX_DEPTH = 3>
 class CuckooTable {
     
 public:
@@ -161,7 +165,7 @@ public:
             }
         }
         
-        if (depth == 10) {
+        if (depth == MAX_DEPTH) {
             if (stash_use < STASH_SIZE-1) {
                 stash[++stash_use] = t;
             } else
