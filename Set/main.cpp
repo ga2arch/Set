@@ -51,6 +51,25 @@ inline size_t hash_combine(const T& t, size_t seed) {
 }
 
 /**
+ Hash the value passed by the i-th hash function and reduce it in the range
+ 0 <= hash < SIZE.
+ Uses only two hash function to simulate any number of hash functions
+ based on the paper Less Hashing, Same Performance
+ (http://www.eecs.harvard.edu/~kirsch/pubs/bbbf/esa06.pdf)
+ @param t the element to hash
+ @param i the i-th hash function
+ @returns int the hash
+ */
+template <typename T, size_t SIZE>
+size_t hash(const T t, int i=0) {
+    auto h1 = hash_combine(t, 0);
+    auto h2 = hash_combine(t, h1);
+    
+    return (h1 + i*h2) % SIZE;
+}
+
+
+/**
  Enumerator class to rappresent the results of a Query
  */
 enum class Query { FOUND, NOT_FOUND, MAYBE };
@@ -96,7 +115,7 @@ public:
     template <typename T>
     void add(const T t) {
         for (int i=0; i < K; i++)
-            bloom[hash(t, i)]++;
+            bloom[hash<T,SIZE>(t, i)]++;
     }
     
     /**
@@ -109,7 +128,7 @@ public:
     template <typename T>
     Query query(const T t) {
         for (int i=0; i < K; i++)
-            if (!bloom[hash(t, i)]) return Query::NOT_FOUND;
+            if (!bloom[hash<T,SIZE>(t, i)]) return Query::NOT_FOUND;
         
         return Query::MAYBE;
     }
@@ -122,29 +141,10 @@ public:
     template <typename T>
     void remove(const T t) {
         for (int i=0; i < K; i++)
-            bloom[hash(t, i)]--;
+            bloom[hash<T,SIZE>(t, i) % SIZE]--;
     }
     
 private:
-    /**
-     Hash the value passed by the i-th hash function and reduce it in the range
-     0 <= hash < SIZE.
-     Uses only two hash function to simulate any number of hash functions
-     based on the paper Less Hashing, Same Performance 
-     (http://www.eecs.harvard.edu/~kirsch/pubs/bbbf/esa06.pdf)
-     @param t the element to hash
-     @param i the i-th hash function
-     @returns int the hash
-     */
-    
-    template <typename T>
-    int hash(const T t, int i) {
-        auto h1 = hash_combine(t, 0);
-        auto h2 = hash_combine(t, h1);
-        
-        return (h1 + i*h2) % SIZE;
-    }
-    
     std::unique_ptr<uint8_t[]> bloom;
 };
 
@@ -461,7 +461,7 @@ class Set {
          @returns reference to the value if the element at index
          */
         reference operator[](int index) {
-            return base[index];
+            return *base[index];
         }
         
         /**
@@ -749,7 +749,6 @@ public:
      If the element is found, use std::rotate to perform a left rotation, effectively 
      moving the element to remove at the end of the Set but outside the valid range.
      @param t the element
-     @returns void
      @exception not_found() if the element is not found in the Set.
      */
     void remove(const T t) {
@@ -870,8 +869,61 @@ Set<T,F> filter_out(const Set<T,F>& s, P p) {
     return n;
 }
 
+template <typename T, size_t SIZE = 1000, size_t K = 3>
+class CuckoTable {
+    
+public:
+    void add(const T t) {
+        if (query(t) == Query::FOUND) return;
+        
+        auto h = hash<T,SIZE>(t, 0);
+        for (int k=0; k < K; ++k) {
+            if (!table[h]) {
+                table[h] = new T(t);
+                
+                return;
+            }
+            h = hash<T,SIZE>(t, k);
+        }
+        
+        auto e = *table[h];
+        *table[h] = t;
+        
+        add(e);
+    }
+    
+    void remove(const T t) {
+        if (query(t) == Query::NOT_FOUND) return;
+        
+        for (int k=0; k < K; k++) {
+            auto h = hash<T,SIZE>(t, 0);
+            
+            if (table[h] && *table[h] == t) {
+                table[h] = nullptr;
+                
+                return;
+            }
+        }
+    }
+    
+    Query query(const T t) {
+        for (int k=0; k < K; k++) {
+            auto h = hash<T,SIZE>(t, 0);
+            
+            if (table[h] && *table[h] == t) return Query::FOUND;
+        }
+        
+        return Query::NOT_FOUND;
+    }
+    
+    
+private:
+    T* table[SIZE] = {};
+};
+
+
 int main(int argc, const char * argv[]) {
-    Set<int> s;
+    Set<int, CuckoTable<int>> s;
     std::vector<int> l{4,5,8,9,10};
     
     std::cout << "Test insertion: ";
@@ -918,7 +970,7 @@ int main(int argc, const char * argv[]) {
     std::cout << "PASSED\n";
     
     std::cout << "Test copy constructor: ";
-    Set<int> c(s);
+    auto c = s;
     
     assert(std::equal(c.begin(), c.end(), s.begin()));
     std::cout << "PASSED\n";
@@ -937,5 +989,4 @@ int main(int argc, const char * argv[]) {
     
     assert(std::equal(f.begin(), f.end(), l.begin()));
     std::cout << "PASSED\n";
-    
 }
