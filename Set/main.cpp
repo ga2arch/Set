@@ -180,7 +180,7 @@ public:
         if (query(t) == Query::NOT_FOUND) return;
         
         for (int k=0; k < K; k++) {
-            auto h = hash(t, size, 0, seed);
+            auto h = hash(t, size, k, seed);
             
             if (table[h].t == t) {
                 table[h] = Nest();
