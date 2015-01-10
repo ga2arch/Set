@@ -888,10 +888,10 @@ public:
             h = hash<T,SIZE>(t, k);
         }
         
-        auto e = table[h];
-        table[h].insert(t);
+        auto node = table[h];
+        table[h].swap(t);
         
-        add(e.t);
+        add(node.t);
     }
     
     void remove(const T t) {
@@ -928,8 +928,14 @@ private:
         Node() =default;
         
         void insert(const T t_) {
+            assert(!full);
             t = t_;
             full = true;
+        }
+        
+        void swap(const T t_) {
+            assert(full);
+            t = t_;
         }
     };
     
