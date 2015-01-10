@@ -78,20 +78,17 @@ enum class Query { FOUND, NOT_FOUND, MAYBE };
  Class that implements a BasicFilter, it always returns a MAYBE when queried 
  for a value, forcing the Set class to linear search the Set for the element.
  */
+template <typename T>
 class BaseFilter {
     
 public:
-    template <typename T>
     void add(const T t) { }
 
-    template <typename T>
     Query query(const T t) {
         return Query::MAYBE;
     }
 
-    template <typename T>
     void remove(const T t) { }
-    
 };
 
 /**
@@ -102,7 +99,7 @@ public:
  @param SIZE the size of the bloomfilter array
  @param K the number of hashing functions
  */
-template <size_t SIZE = 1000, size_t K = 5>
+template <typename T, size_t SIZE = 1000, size_t K = 5>
 class BloomFilter {
 
 public:
@@ -112,7 +109,6 @@ public:
      Add the value t to the bloomfilter
      @param t value to add
      */
-    template <typename T>
     void add(const T t) {
         for (int i=0; i < K; i++)
             bloom[hash<T,SIZE>(t, i)]++;
@@ -124,8 +120,6 @@ public:
      @param t value to query
      @returns Query query result
      */
-    
-    template <typename T>
     Query query(const T t) {
         for (int i=0; i < K; i++)
             if (!bloom[hash<T,SIZE>(t, i)]) return Query::NOT_FOUND;
@@ -137,15 +131,87 @@ public:
      Remove the value t from the bloomfilter
      @param t value to remove
      */
-    
-    template <typename T>
     void remove(const T t) {
         for (int i=0; i < K; i++)
-            bloom[hash<T,SIZE>(t, i) % SIZE]--;
+            bloom[hash<T,SIZE>(t, i)]--;
     }
     
 private:
     std::unique_ptr<uint8_t[]> bloom;
+};
+
+template <typename T, size_t SIZE = 1000, size_t K = 3>
+class CuckooTable {
+    
+public:
+    CuckooTable(): table(std::unique_ptr<Node[]>(new Node[SIZE]())) {}
+    
+    void add(const T t) {
+        if (query(t) == Query::FOUND) return;
+        
+        auto h = hash<T,SIZE>(t, 0);
+        for (int k=0; k < K; ++k) {
+            if (!table[h].full) {
+                table[h].insert(t);
+                
+                return;
+            }
+            h = hash<T,SIZE>(t, k);
+        }
+        
+        auto node = table[h];
+        table[h].swap(t);
+        
+        add(node.t);
+    }
+    
+    void remove(const T t) {
+        if (query(t) == Query::NOT_FOUND) return;
+        
+        for (int k=0; k < K; k++) {
+            auto h = hash<T,SIZE>(t, 0);
+            
+            if (table[h].t == t) {
+                table[h] = Node();
+                
+                return;
+            }
+        }
+    }
+    
+    Query query(const T t) {
+        for (int k=0; k < K; k++) {
+            auto h = hash<T,SIZE>(t, 0);
+            
+            if (table[h].t == t) return Query::FOUND;
+        }
+        
+        return Query::NOT_FOUND;
+    }
+    
+    
+private:
+    
+    struct Node {
+        T t;
+        bool full = false;
+        
+        Node() =default;
+        
+        void insert(const T t_) {
+            assert(!full);
+            t = t_;
+            full = true;
+        }
+        
+        void swap(const T t_) {
+            assert(full);
+            t = t_;
+        }
+    };
+    
+    std::unique_ptr<Node[]> table;
+    
 };
 
 /**
@@ -155,7 +221,7 @@ private:
  @param T the type of the values inside the Set
  @param F the filter to use, defaulted to BloomFilter
  */
-template <typename T, class F = BloomFilter<>>
+template <typename T, class F = BloomFilter<T>>
 class Set {
     
     class const_iterator;
@@ -869,81 +935,6 @@ Set<T,F> filter_out(const Set<T,F>& s, P p) {
     return n;
 }
 
-template <typename T, size_t SIZE = 1000, size_t K = 3>
-class CuckooTable {
-    
-public:
-    CuckooTable(): table(std::unique_ptr<Node[]>(new Node[SIZE]())) {}
-    
-    void add(const T t) {
-        if (query(t) == Query::FOUND) return;
-        
-        auto h = hash<T,SIZE>(t, 0);
-        for (int k=0; k < K; ++k) {
-            if (!table[h].full) {
-                table[h].insert(t);
-                
-                return;
-            }
-            h = hash<T,SIZE>(t, k);
-        }
-        
-        auto node = table[h];
-        table[h].swap(t);
-        
-        add(node.t);
-    }
-    
-    void remove(const T t) {
-        if (query(t) == Query::NOT_FOUND) return;
-        
-        for (int k=0; k < K; k++) {
-            auto h = hash<T,SIZE>(t, 0);
-            
-            if (table[h].t == t) {
-                table[h] = Node();
-                
-                return;
-            }
-        }
-    }
-    
-    Query query(const T t) {
-        for (int k=0; k < K; k++) {
-            auto h = hash<T,SIZE>(t, 0);
-            
-            if (table[h].t == t) return Query::FOUND;
-        }
-        
-        return Query::NOT_FOUND;
-    }
-    
-    
-private:
-    
-    struct Node {
-        T t;
-        bool full = false;
-        
-        Node() =default;
-        
-        void insert(const T t_) {
-            assert(!full);
-            t = t_;
-            full = true;
-        }
-        
-        void swap(const T t_) {
-            assert(full);
-            t = t_;
-        }
-    };
-    
-    std::unique_ptr<Node[]> table;
-
-};
-
-
 int main(int argc, const char * argv[]) {
     Set<int, CuckooTable<int>> s;
     std::vector<int> l{4,5,8,9,10};
@@ -980,7 +971,7 @@ int main(int argc, const char * argv[]) {
     assert(error);
     std::cout << "PASSED\n";
     
-    std::cout << "Test deletion of element not in the Set: ";
+    std::cout << "Test deletion of element not in the set: ";
     error = false;
     try {
         s.remove(30);
