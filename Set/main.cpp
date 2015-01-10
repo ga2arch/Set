@@ -140,11 +140,12 @@ private:
     std::unique_ptr<uint8_t[]> bloom;
 };
 
-template <typename T, size_t SIZE = 1000, size_t K = 3>
+template <typename T, size_t SIZE = 1000, size_t K = 2, size_t STASH_SIZE = 2>
 class CuckooTable {
     
 public:
-    CuckooTable(): table(std::unique_ptr<Nest[]>(new Nest[SIZE]())) {}
+    CuckooTable(): table(std::unique_ptr<Nest[]>(new Nest[SIZE]())),
+                   stash(std::unique_ptr<T[]>(new T[STASH_SIZE]())) {}
     
     void add(const T t, int i=0, int depth=0) {
         if (query(t) == Query::FOUND) return;
@@ -160,8 +161,11 @@ public:
             }
         }
         
-        if (depth == 6) {
-            reindex(h);
+        if (depth == 10) {
+            if (stash_use < STASH_SIZE-1) {
+                stash[++stash_use] = t;
+            } else
+                reindex(h);
             return;
         }
         
@@ -188,16 +192,20 @@ public:
     
     Query query(const T t) {
         for (int k=0; k < K; k++) {
-            auto h = hash(t, size, 0, seed);
-            
+            auto h = hash(t, size, k, seed);
+
             if (table[h].t == t) return Query::FOUND;
         }
+        
+        for (int i=0; i < STASH_SIZE; i++)
+            if (stash[i] == t) return Query::FOUND;
         
         return Query::NOT_FOUND;
     }
     
 private:
     void reindex(size_t seed_) {
+
         auto old_table = std::move(table);
         auto old_size = size;
         
@@ -235,6 +243,9 @@ private:
     
     size_t seed = 0;
     size_t size = SIZE;
+    size_t stash_use = 0;
+
+    std::unique_ptr<T[]> stash;
     std::unique_ptr<Nest[]> table;
 };
 
@@ -960,77 +971,77 @@ Set<T,F> filter_out(const Set<T,F>& s, P p) {
 }
 
 int main(int argc, const char * argv[]) {
-    Set<int, CuckooTable<int>> s;
-    std::vector<int> l{4,5,8,9,10};
+//    Set<int, CuckooTable<int>> s;
+//    std::vector<int> l{4,5,8,9,10};
+//    
+//    std::cout << "Test insertion: ";
+//    s.insert(4);
+//    s.insert(5);
+//    s.insert(8);
+//    s.insert(9);
+//    s.insert(10);
+//    
+//    assert(std::equal(s.begin(), s.end(), l.begin()));
+//    std::cout << "PASSED\n";
+//    
+//    std::cout << "Test deletion: ";
+//    s.remove(5);
+//    
+//    l = {4,8,9,10};
+//    assert(std::equal(s.begin(), s.end(), l.begin()));
+//    std::cout << "PASSED\n";
+//    
+//    std::cout << "Test random access: ";
+//    assert(s[1] == l[1]);
+//    std::cout << "PASSED\n";
+//    
+//    std::cout << "Test insertion of already inserted element: ";
+//    bool error = false;
+//    try {
+//        s.insert(4);
+//    } catch (already_in) {
+//        error = true;
+//    }
+//    
+//    assert(error);
+//    std::cout << "PASSED\n";
+//    
+//    std::cout << "Test deletion of element not in the set: ";
+//    error = false;
+//    try {
+//        s.remove(30);
+//    } catch (not_found) {
+//        error = true;
+//    }
+//    
+//    assert(error);
+//    std::cout << "PASSED\n";
+//    
+//    std::cout << "Test copy constructor: ";
+//    auto c = s;
+//    
+//    assert(std::equal(c.begin(), c.end(), s.begin()));
+//    std::cout << "PASSED\n";
+//    
+//    std::cout << "Test constructor from iterators: ";
+//    l = {4,4,8,9,10};
+//    Set<int> m(l.begin(), l.end());
+//    l = {4,8,9,10};
+//
+//    assert(std::equal(m.begin(), m.end(), s.begin()));
+//    std::cout << "PASSED\n";
+//    
+//    std::cout << "Test filter out: ";
+//    auto f = filter_out(s, [](int x) { return x == 4; });
+//    l = {8,9,10};
+//    
+//    assert(std::equal(f.begin(), f.end(), l.begin()));
+//    std::cout << "PASSED\n";
     
-    std::cout << "Test insertion: ";
-    s.insert(4);
-    s.insert(5);
-    s.insert(8);
-    s.insert(9);
-    s.insert(10);
     
-    assert(std::equal(s.begin(), s.end(), l.begin()));
-    std::cout << "PASSED\n";
+    CuckooTable<int> ct;
     
-    std::cout << "Test deletion: ";
-    s.remove(5);
-    
-    l = {4,8,9,10};
-    assert(std::equal(s.begin(), s.end(), l.begin()));
-    std::cout << "PASSED\n";
-    
-    std::cout << "Test random access: ";
-    assert(s[1] == l[1]);
-    std::cout << "PASSED\n";
-    
-    std::cout << "Test insertion of already inserted element: ";
-    bool error = false;
-    try {
-        s.insert(4);
-    } catch (already_in) {
-        error = true;
-    }
-    
-    assert(error);
-    std::cout << "PASSED\n";
-    
-    std::cout << "Test deletion of element not in the set: ";
-    error = false;
-    try {
-        s.remove(30);
-    } catch (not_found) {
-        error = true;
-    }
-    
-    assert(error);
-    std::cout << "PASSED\n";
-    
-    std::cout << "Test copy constructor: ";
-    auto c = s;
-    
-    assert(std::equal(c.begin(), c.end(), s.begin()));
-    std::cout << "PASSED\n";
-    
-    std::cout << "Test constructor from iterators: ";
-    l = {4,4,8,9,10};
-    Set<int> m(l.begin(), l.end());
-    l = {4,8,9,10};
-
-    assert(std::equal(m.begin(), m.end(), s.begin()));
-    std::cout << "PASSED\n";
-    
-    std::cout << "Test filter out: ";
-    auto f = filter_out(s, [](int x) { return x == 4; });
-    l = {8,9,10};
-    
-    assert(std::equal(f.begin(), f.end(), l.begin()));
-    std::cout << "PASSED\n";
-    
-    
-    CuckooTable<int, 1000, 2> ct;
-    
-    for (int i=0; i < 3000; i++)
+    for (int i=1; i < 100000; i++)
         ct.add(i);
     
     std::cout << (ct.query(800) == Query::FOUND ? "1" : "0");
