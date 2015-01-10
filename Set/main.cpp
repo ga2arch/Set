@@ -878,18 +878,18 @@ public:
         
         auto h = hash<T,SIZE>(t, 0);
         for (int k=0; k < K; ++k) {
-            if (!table[h]) {
-                table[h] = std::unique_ptr<T>(new T(t));
+            if (!table[h].full) {
+                table[h] = Node(t);
                 
                 return;
             }
             h = hash<T,SIZE>(t, k);
         }
         
-        auto e = *table[h];
-        *table[h] = t;
+        auto e = table[h];
+        table[h] = t;
         
-        add(e);
+        add(e.t);
     }
     
     void remove(const T t) {
@@ -898,8 +898,8 @@ public:
         for (int k=0; k < K; k++) {
             auto h = hash<T,SIZE>(t, 0);
             
-            if (table[h] && *table[h] == t) {
-                table[h] = nullptr;
+            if (table[h].t == t) {
+                table[h] = Node();
                 
                 return;
             }
@@ -910,7 +910,7 @@ public:
         for (int k=0; k < K; k++) {
             auto h = hash<T,SIZE>(t, 0);
             
-            if (table[h] && *table[h] == t) return Query::FOUND;
+            if (table[h].t == t) return Query::FOUND;
         }
         
         return Query::NOT_FOUND;
@@ -918,7 +918,17 @@ public:
     
     
 private:
-    std::unique_ptr<T> table[SIZE] = {};
+    
+    struct Node {
+        T t;
+        bool full = false;
+        
+        Node() =default;
+        Node(const T t_): t(t_), full(true) {}
+    };
+    
+    std::unique_ptr<Node[]> table = std::unique_ptr<Node[]>(new Node[SIZE]());
+
 };
 
 
