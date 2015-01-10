@@ -881,7 +881,7 @@ public:
         auto h = hash<T,SIZE>(t, 0);
         for (int k=0; k < K; ++k) {
             if (!table[h].full) {
-                table[h] = Node(t);
+                table[h].insert(t);
                 
                 return;
             }
@@ -889,7 +889,7 @@ public:
         }
         
         auto e = table[h];
-        table[h] = t;
+        table[h].insert(t);
         
         add(e.t);
     }
@@ -926,7 +926,11 @@ private:
         bool full = false;
         
         Node() =default;
-        Node(const T t_): t(t_), full(true) {}
+        
+        void insert(const T t_) {
+            t = t_;
+            full = true;
+        }
     };
     
     std::unique_ptr<Node[]> table;
