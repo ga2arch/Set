@@ -873,6 +873,8 @@ template <typename T, size_t SIZE = 1000, size_t K = 3>
 class CuckooTable {
     
 public:
+    CuckooTable(): table(std::unique_ptr<Node[]>(new Node[SIZE]())) {}
+    
     void add(const T t) {
         if (query(t) == Query::FOUND) return;
         
@@ -927,7 +929,7 @@ private:
         Node(const T t_): t(t_), full(true) {}
     };
     
-    std::unique_ptr<Node[]> table = std::unique_ptr<Node[]>(new Node[SIZE]());
+    std::unique_ptr<Node[]> table;
 
 };
 
