@@ -210,10 +210,7 @@ namespace set { namespace filters {
         };
 
     public:
-        ~CuckooFilter() {
-            std::free(table);
-            table = nullptr;
-        }
+        CuckooFilter(): table(std::unique_ptr<size_t*[]>(new size_t*[SIZE])) {}
         
         void add(const T t) {
             auto res = lookup(t);
@@ -222,7 +219,7 @@ namespace set { namespace filters {
             move(res.fingerprint, res.h1);
         }
         
-        void move(size_t fingerprint, size_t h1) {
+        void move(size_t fingerprint, size_t h1, int depth=0) {
             auto h2 = h1 ^ hash(fingerprint, size, 900, seed);
             
             if (!table[h1]) {
@@ -235,6 +232,10 @@ namespace set { namespace filters {
                 table[h1] = new size_t(fingerprint);
                 
                 return;
+            }
+            
+            if (depth == MAX_DEPTH) {
+                throw std::runtime_error("Full");
             }
             
             auto elem = *table[h1];
@@ -278,7 +279,7 @@ namespace set { namespace filters {
         size_t seed = 0;
         size_t size = SIZE;
         
-        size_t** table = (size_t**) std::malloc(SIZE * sizeof(size_t));
+        std::unique_ptr<size_t*[]> table;
     };
     
 }}

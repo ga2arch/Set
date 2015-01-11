@@ -38,6 +38,13 @@ int main(int argc, const char * argv[]) {
     assert(std::equal(s.begin(), s.end(), l.begin()));
     std::cout << "PASSED\n";
     
+    std::cout << "Test insertion after deletion: ";
+    s.insert(5);
+    
+    l = {4,8,9,10,5};
+    assert(std::equal(s.begin(), s.end(), l.begin()));
+    std::cout << "PASSED\n";
+    
     std::cout << "Test random access: ";
     assert(s[1] == l[1]);
     std::cout << "PASSED\n";
@@ -80,7 +87,7 @@ int main(int argc, const char * argv[]) {
     
     std::cout << "Test filter out: ";
     auto f = filter_out(s, [](int x) { return x == 4; });
-    l = {8,9,10};
+    l = {8,9,10,5};
     
     assert(std::equal(f.begin(), f.end(), l.begin()));
     std::cout << "PASSED\n";
