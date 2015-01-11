@@ -260,7 +260,7 @@ private:
  @param T the type of the values inside the Set
  @param F the filter to use, defaulted to BloomFilter
  */
-template <typename T, class F = BloomFilter<T>>
+template <typename T, typename F = CuckooTable<T>>
 class Set {
     
     template <bool is_const = true>
@@ -708,7 +708,7 @@ private:
  @param p the function or lambda to use to filter the elements
  @returns the new Set
  */
-template <typename T, class F, typename P>
+template <typename T, typename F, typename P>
 Set<T,F> filter_out(const Set<T,F>& s, P p) {
     Set<T,F> n;
     
