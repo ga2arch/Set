@@ -209,11 +209,11 @@ public:
     
 private:
     void reindex(size_t seed_) {
-
         auto old_table = std::move(table);
         auto old_size = size;
         
         size *= 2;
+        stash_use = 0;
         seed = seed_;
         table = std::unique_ptr<Nest[]>(new Nest[size]());
         
