@@ -259,21 +259,19 @@ namespace set { namespace filters {
         void remove(const T t) {
             auto res = lookup(t);
             
-            if (table[res.h1])
-                for (int i=0; i < 4; i++)
-                    if (table[res.h1][i])
-                        if (*table[res.h1][i] == res.fingerprint) {
-                            table[res.h1][i] = nullptr;
-                            return;
-                        }
-            
-            if (table[res.h2])
-                for (int i=0; i < 4; i++)
-                    if (table[res.h2][i])
-                        if (*table[res.h2][i] == res.fingerprint) {
-                            table[res.h2][i] = nullptr;
-                            return;
-                        }
+            for (int i=0; i < 4; i++)
+                if (table[res.h1][i])
+                    if (*table[res.h1][i] == res.fingerprint) {
+                        table[res.h1][i] = nullptr;
+                        return;
+                    }
+        
+            for (int i=0; i < 4; i++)
+                if (table[res.h2][i])
+                    if (*table[res.h2][i] == res.fingerprint) {
+                        table[res.h2][i] = nullptr;
+                        return;
+                    }
             
         }
         
