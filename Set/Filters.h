@@ -87,7 +87,8 @@ namespace set { namespace filters {
               size_t SIZE = 1000,
               size_t K = 2,
               size_t STASH_SIZE = 2,
-              size_t MAX_DEPTH = 100>
+              size_t MAX_DEPTH = 100,
+              bool   FIXED = false>
     class CuckooTable {
         
     public:
@@ -107,13 +108,18 @@ namespace set { namespace filters {
                 }
             }
             
-            auto index = hash(t, size, 0, seed);
+            auto index = hash(t, size, rand() % K, seed);
             
             if (depth == MAX_DEPTH) {
-                if (stash_use < STASH_SIZE-1) {
+                if (stash_use < STASH_SIZE-1)
                     stash[++stash_use] = t;
-                } else
-                    reindex(index);
+                
+                else if (!FIXED)
+                    rebuild(index);
+                
+                else
+                    throw std::runtime_error("Full");
+                
                 return;
             }
             
@@ -151,7 +157,7 @@ namespace set { namespace filters {
         }
         
     private:
-        void reindex(size_t seed_) {
+        void rebuild(size_t seed_) {
             auto old_table = std::move(table);
             auto old_size = size;
             
@@ -212,16 +218,16 @@ namespace set { namespace filters {
 
     public:
         CuckooFilter() {
-            srand (time(NULL));
+            srand (static_cast<int>(time(NULL)));
 
             for (int i=0; i < SIZE; i++) {
-                table[i] = Row(new size_t*[BUCKETS]);
+                table[i] = Row(new Fp[BUCKETS]);
                 
                 for (int j=0; j < BUCKETS; j++)
                     table[i][j] = nullptr;
             }
         }
-        
+ 
         void add(const T t) {
             auto res = lookup(t);
             if (res.ptr) return;
@@ -272,10 +278,10 @@ namespace set { namespace filters {
             Result res;
             
             for (int i=0; i < BUCKETS; i++) {
-                if ((res.ptr = table[h1][i]))
+                if ((res.ptr = table[h1][i].get()))
                     break;
                 
-                if ((res.ptr = table[h2][i]))
+                if ((res.ptr = table[h2][i].get()))
                     break;
             }
             
@@ -289,7 +295,7 @@ namespace set { namespace filters {
         bool add_fp(size_t fp, size_t h) {
             for (int i=0; i < BUCKETS; i++) {
                 if (!table[h][i]) {
-                    table[h][i] = new size_t(fp);
+                    table[h][i] = std::unique_ptr<size_t>(new size_t(fp));
                     
                     return true;
                 }
@@ -312,7 +318,8 @@ namespace set { namespace filters {
         size_t seed = 0;
         size_t size = SIZE;
         
-        using Row = std::unique_ptr<size_t*[]>;
+        using Fp    = std::unique_ptr<size_t>;
+        using Row   = std::unique_ptr<Fp[]>;
         using Table = std::unique_ptr<Row[]>;
         
         Table table = Table(new Row[SIZE]);
