@@ -18,7 +18,7 @@
 using namespace set;
 
 int main(int argc, const char * argv[]) {
-    Set<int, CuckooTable<int>> s;
+    Set<int, CuckooFilter<int>> s;
     std::vector<int> l{4,5,8,9,10};
     
     std::cout << "Test insertion: ";
@@ -84,12 +84,11 @@ int main(int argc, const char * argv[]) {
     
     assert(std::equal(f.begin(), f.end(), l.begin()));
     std::cout << "PASSED\n";
-//    
-//    
-//    CuckooTable<int> ct;
-//    
-//    for (int i=1; i < 100000; i++)
-//        ct.add(i);
-//    
-//    std::cout << (ct.query(800) == Query::FOUND ? "1" : "0");
+    
+    
+    CuckooFilter<int> cf;
+    
+    cf.add(10);
+    
+    std::cout << (cf.query(10) == Query::FOUND ? "1" : "0");
 }

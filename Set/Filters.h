@@ -194,7 +194,79 @@ namespace set { namespace filters {
         std::unique_ptr<T[]> stash;
         std::unique_ptr<Nest[]> table;
     };
+ 
+    template <typename T,
+    size_t SIZE = 1000,
+    size_t STASH_SIZE = 2,
+    size_t MAX_DEPTH = 100>
     
-} }
+    class CuckooFilter {
+        
+    public:
+        ~CuckooFilter() {
+            std::free(table);
+            table = nullptr;
+        }
+        
+        void add(const T t) {
+            if (query(t) == Query::FOUND) return;
+            
+            auto fingerprint = hash(t, size, 1000, seed);
+            auto h1 = hash(t, size, 0, seed);
+            
+            move(fingerprint, h1);
+        }
+        
+        void move(size_t fingerprint, size_t h1) {
+            auto h2 = h1 ^ hash(fingerprint, size, 900, seed);
+            
+            if (!table[h1]) {
+                table[h1] = new size_t(fingerprint);
+                
+                return;
+            }
+            
+            if (!table[h2]) {
+                table[h1] = new size_t(fingerprint);
+                
+                return;
+            }
+            
+            auto node = *table[h1];
+            *table[h1] = fingerprint;
+            
+            move(node, h1);
+        }
+        
+        void remove(const T t) {
+            if (query(t) == Query::NOT_FOUND) return;
+            
+            auto fingerprint = hash(t, size, 1000, seed);
+            auto h1 = hash(t, size, 0, seed);
+            auto h2 = h1 ^ hash(fingerprint, size, 900, seed);
+
+            if (table[h1]) table[h1] = nullptr;
+            if (table[h2]) table[h2] = nullptr;
+        }
+        
+        Query query(const T t) {
+            auto fingerprint = hash(t, size, 1000, seed);
+            auto h1 = hash(t, size, 0, seed);
+            auto h2 = h1 ^ hash(fingerprint, size, 900, seed);
+            
+            if (table[h1]) return Query::FOUND;
+            if (table[h2]) return Query::FOUND;
+            
+            return Query::NOT_FOUND;
+        }
+        
+    private:
+        size_t seed = 0;
+        size_t size = SIZE;
+        
+        size_t** table = (size_t**) std::malloc(SIZE * sizeof(size_t));
+    };
+    
+}}
 
 #endif
