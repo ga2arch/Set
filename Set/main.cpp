@@ -263,270 +263,15 @@ private:
 template <typename T, class F = BloomFilter<T>>
 class Set {
     
-    class const_iterator;
-    
-    class iterator {
-        //
-    public:
-        typedef std::random_access_iterator_tag iterator_category;
-        typedef T                               value_type;
-        typedef ptrdiff_t                       difference_type;
-        typedef T*                        pointer;
-        typedef T&                        reference;
-        
-        /**
-         Copy constructor
-         @param other reference to the iterator to copy.
-         */
-        iterator(const iterator &other) {
-            base = other.base;
-            data = other.data;
-        }
-        
-        /**
-         Assignment
-         @param other reference to the iterator to copy.
-         */
-        iterator& operator=(const iterator &other) {
-            base = other.base;
-            data = other.data;
-            return *this;
-        }
-        
-        /**
-         Dereference pointer
-         */
-        reference operator*() const {
-            return *data;
-        }
-        
-        /**
-         Return pointer
-         @returns pointer to the current element.
-         */
-        pointer operator->() const {
-            return data;
-        }
-        
-        /**
-         Return element at index
-         @returns reference to the value if the element at index
-         */
-        reference operator[](int index) {
-            return base[index];
-        }
-        
-        /**
-         Post-increment operator;
-         @returns iterator not incremented;
-         */
-        iterator operator++(int) {
-            return iterator(base, data++);
-        }
-        
-        /**
-         Pre-increment operator;
-         @returns iterator incremented;
-         */
-        iterator& operator++() {
-            ++data;
-            return *this;
-        }
-        
-        /**
-         Post-decrement operator;
-         @returns iterator not decremented;
-         */
-        iterator operator--(int) {
-            return iterator(base, data--);
-        }
-        
-        /**
-         Pre-decrement operator;
-         @returns iterator decremented;
-         */
-        iterator& operator--() {
-            --data;
-            return *this;
-        }
-        
-        /**
-         Advance operator;
-         @param offset how much to advance
-         @returns iterator not advanced by offset;
-         */
-        iterator operator+(int offset) {
-            return iterator(base, data+offset);
-        }
-        
-        /**
-         Recede operator;
-         @param offset how much to recede
-         @returns iterator not receded by offset;
-         */
-        iterator operator-(int offset) {
-            return iterator(base, data-offset);
-        }
-        
-        /**
-         Advance operator;
-         @param offset how much to advance
-         @returns iterator advanced by offset;
-         */
-        iterator& operator+=(int offset) {
-            data += offset;
-            return *this;
-        }
-        
-        /**
-         Recede operator;
-         @param offset how much to recede
-         @returns iterator receded by offset;
-         */
-        iterator& operator-=(int offset) {
-            data -= offset;
-            return *this;
-        }
-        
-        /**
-         Difference operator;
-         @param other reference to the other iterator
-         @returns how many elements between this and other iterator
-         */
-        difference_type operator-(const iterator &other) {
-            difference_type diff = data - other.data;
-            return diff;
-        }
-        
-        /**
-         Equality operator, check if the two iterators point to the same element
-         @param other reference to the other iterator
-         */
-        bool operator==(const iterator &other) const {
-            return data == other.data && base == other.base;
-        }
-        
-        /**
-         Inequality operator, check iif the two iterators 
-         don't point to the same element
-         @param other reference to the other iterator
-         */
-        bool operator!=(const iterator &other) const {
-            return data != other.data || base != other.base;
-        }
-        
-        /**
-         > operator, check an iterator point to an element with an index in the collection
-         that is > the index of the element pointed by the other iterator
-         @param other reference to the other iterator
-         */
-        bool operator>(const iterator &other) const {
-            return data > other.data && base == other.base;
-        }
-        
-        /**
-         >= operator, check an iterator point to an element with an index in the collection
-         that is >= the index of the element pointed by the other iterator
-         @param other reference to the other iterator
-         */
-        bool operator>=(const iterator &other) const {
-            return data >= other.data && base == other.base;
-        }
-        
-        /**
-         < operator, check an iterator point to an element with an index in the collection
-         that is < the index of the element pointed by the other iterator
-         @param other reference to the other iterator
-         */
-        bool operator<(const iterator &other) const {
-            return data < other.data && base == other.base;
-        }
-        
-        /**
-         <= operator, check an iterator point to an element with an index in the collection
-         that is <= the index of the element pointed by the other iterator
-         @param other reference to the other iterator
-         */
-        bool operator<=(const iterator &other) const {
-            return data <= other.data && base == other.base;
-        }
-        
-        friend class const_iterator;
-        
-        /**
-         Equality operator, check if the two iterators point to the same element.
-         @param other reference to the other const_iterator
-         */
-        bool operator==(const const_iterator &other) const {
-            return data == other.data && base == other.base;
-        }
-        
-        /**
-         Inequality operator, check if the two iterators 
-         don't point to the same element.
-         @param other reference to the other const_iterator
-         */
-        bool operator!=(const const_iterator &other) const {
-            return data != other.data || base != other.base;
-        }
-        
-        /**
-         > operator, check an iterator point to an element with an index in the collection
-         that is > the index of the element pointed by the other const_iterator
-         @param other reference to the other const_iterator
-         */
-        bool operator>(const const_iterator &other) const {
-            return data > other.data && base == other.base;
-        }
-        
-        /**
-         >= operator, check an iterator point to an element with an index in the collection
-         that is >= the index of the element pointed by the other const_iterator
-         @param other reference to the other const_iterator
-         */
-        bool operator>=(const const_iterator &other) const {
-            return data >= other.data && base == other.base;
-        }
-        
-        /**
-         < operator, check an iterator point to an element with an index in the collection
-         that is < the index of the element pointed by the other const_iterator
-         @param other reference to the other const_iterator
-         */
-        bool operator<(const const_iterator &other) const {
-            return data < other.data && base == other.base;
-        }
-        
-        /**
-         <= operator, check an iterator point to an element with an index in the collection
-         that is <= the index of the element pointed by the other const_iterator
-         @param other reference to the other const_iterator
-         */
-        bool operator<=(const const_iterator &other) const {
-            return data <= other.data && base == other.base;
-        }
-        
-        
-    private:
-        pointer base;
-        pointer data;
-        
-        friend class Set;
-        
-        explicit iterator(T* base_, T* data_): base(base_), data(data_) {}
-        explicit iterator(T* data_): base(data_), data(data_) {}
-        
-    };
-    
+    template <bool is_const = true>
     class const_iterator {
         //
     public:
-        typedef std::random_access_iterator_tag iterator_category;
-        typedef T                               value_type;
-        typedef ptrdiff_t                       difference_type;
-        typedef const T*                        pointer;
-        typedef const T&                        reference;
-        
+        using iterator_category = std::random_access_iterator_tag ;
+        using value_type        = typename std::conditional<is_const, const T, T>::type;
+        using difference_type   = ptrdiff_t;
+        using pointer           = value_type*;
+        using reference         = value_type&;
         /**
          Copy constructor
          @param other reference to the const_iterator to copy.
@@ -655,7 +400,7 @@ class Set {
          Equality operator, check if the two iterators point to the same element
          @param other reference to the other const_iterator
          */
-        bool operator==(const const_iterator &other) const {
+        bool operator==(const const_iterator<> &other) const {
             return data == other.data && base == other.base;
         }
         
@@ -664,7 +409,7 @@ class Set {
          don't point to the same element
          @param other reference to the other const_iterator
          */
-        bool operator!=(const const_iterator &other) const {
+        bool operator!=(const const_iterator<> &other) const {
             return data != other.data || base != other.base;
         }
         
@@ -673,7 +418,7 @@ class Set {
          that is > the index of the element pointed by the other const_iterator
          @param other reference to the other const_iterator
          */
-        bool operator>(const const_iterator &other) const {
+        bool operator>(const const_iterator<> &other) const {
             return data > other.data && base == other.base;
         }
         
@@ -682,7 +427,7 @@ class Set {
          that is >= the index of the element pointed by the other const_iterator
          @param other reference to the other const_iterator
          */
-        bool operator>=(const const_iterator &other) const {
+        bool operator>=(const const_iterator<> &other) const {
             return data >= other.data && base == other.base;
         }
         
@@ -691,7 +436,7 @@ class Set {
          that is < the index of the element pointed by the other const_iterator
          @param other reference to the other const_iterator
          */
-        bool operator<(const const_iterator &other) const {
+        bool operator<(const const_iterator<> &other) const {
             return data < other.data && base == other.base;
         }
         
@@ -700,17 +445,15 @@ class Set {
          that is <= the index of the element pointed by the other const_iterator
          @param other reference to the other const_iterator
          */
-        bool operator<=(const const_iterator &other) const {
+        bool operator<=(const const_iterator<> &other) const {
             return data <= other.data && base == other.base;
         }
-        
-        friend class iterator;
         
         /**
          Equality operator, check if the two iterators point to the same element.
          @param other reference to the other iterator
          */
-        bool operator==(const iterator &other) const {
+        bool operator==(const const_iterator<false> &other) const {
             return data == other.data && base == other.base;
         }
         
@@ -719,7 +462,7 @@ class Set {
          don't point to the same element.
          @param other reference to the other iterator
          */
-        bool operator!=(const iterator &other) const {
+        bool operator!=(const const_iterator<false> &other) const {
             return data != other.data || base != other.base;
         }
         
@@ -728,7 +471,7 @@ class Set {
          that is > the index of the element pointed by the other const_iterator
          @param other reference to the other iterator
          */
-        bool operator>(const iterator &other) const {
+        bool operator>(const const_iterator<false> &other) const {
             return data > other.data && base == other.base;
         }
         
@@ -737,7 +480,7 @@ class Set {
          that is >= the index of the element pointed by the other iterator
          @param other reference to the other iterator
          */
-        bool operator>=(const iterator &other) const {
+        bool operator>=(const const_iterator<false> &other) const {
             return data >= other.data && base == other.base;
         }
         
@@ -746,7 +489,7 @@ class Set {
          that is < the index of the element pointed by the other iterator
          @param other reference to the other iterator
          */
-        bool operator<(const iterator &other) const {
+        bool operator<(const const_iterator<false> &other) const {
             return data < other.data && base == other.base;
         }
         
@@ -755,16 +498,16 @@ class Set {
          that is <= the index of the element pointed by the other iterator
          @param other reference to the other iterator
          */
-        bool operator<=(const iterator &other) const {
+        bool operator<=(const const_iterator<false> &other) const {
             return data <= other.data && base == other.base;
         }
-        
+    
     private:
         pointer base;
         pointer data;
-     
+        
         friend class Set;
-
+        
         const_iterator(T* base_, T* data_): base(base_), data(data_) {}
         const_iterator(T* data_): base(data_), data(data_) {}
         
@@ -879,32 +622,32 @@ public:
      Return the const_iterator, pointing at the first element
      @returns the const:iterator
      */
-    const_iterator begin() const {
-        return const_iterator(data);
+    const_iterator<> begin() const {
+        return const_iterator<>(data);
     }
     
     /**
      Return the const_iterator, pointing at the element after the last
      @returns the const_iterator
      */
-    const_iterator end() const {
-        return const_iterator(data, data+last+1);
+    const_iterator<> end() const {
+        return const_iterator<>(data, data+last+1);
     }
     
     /**
      Return the iterator, pointing at the first element
      @returns the iterator
      */
-    iterator begin() {
-        return iterator(data);
+    const_iterator<false> begin() {
+        return const_iterator<false>(data);
     }
     
     /**
      Return the iterator, pointing at the last element
      @returns the iterator
      */
-    iterator end() {
-        return iterator(data, data+last+1);
+    const_iterator<false> end() {
+        return const_iterator<false>(data, data+last+1);
     }
 
 private:
