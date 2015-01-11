@@ -9,6 +9,7 @@
 #ifndef Set_Filters_h
 #define Set_Filters_h
 
+#include <cstdlib>
 #include <memory>
 #include <algorithm>
 
@@ -211,8 +212,10 @@ namespace set { namespace filters {
 
     public:
         CuckooFilter() {
+            srand (time(NULL));
+
             for (int i=0; i < SIZE; i++) {
-                table[i] = std::unique_ptr<size_t*[]>(new size_t*[BUCKETS]);
+                table[i] = Row(new size_t*[BUCKETS]);
                 
                 for (int j=0; j < BUCKETS; j++)
                     table[i][j] = nullptr;
@@ -249,12 +252,14 @@ namespace set { namespace filters {
             if (add_fp(fingerprint, h1)) return;
             if (add_fp(fingerprint, h2)) return;
 
-            if (depth == MAX_DEPTH) {
+            if (depth == MAX_DEPTH)
                 throw std::runtime_error("Full");
-            }
             
-            auto elem = *table[h1][0];
-            *table[h1][0] = fingerprint;
+            auto row = rand() % 2 == 0 ? h1 : h2;
+            auto col = rand() % 4;
+            
+            auto elem = *table[row][col];
+            *table[row][col] = fingerprint;
             
             move(elem, h1);
         }
