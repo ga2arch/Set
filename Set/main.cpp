@@ -264,7 +264,7 @@ template <typename T, class F = BloomFilter<T>>
 class Set {
     
     template <bool is_const = true>
-    class const_iterator {
+    class _iterator {
         //
     public:
         using iterator_category = std::random_access_iterator_tag ;
@@ -274,18 +274,18 @@ class Set {
         using reference         = value_type&;
         /**
          Copy constructor
-         @param other reference to the const_iterator to copy.
+         @param other reference to the _iterator to copy.
          */
-        const_iterator(const const_iterator &other) {
+        _iterator(const _iterator &other) {
             base = other.base;
             data = other.data;
         }
         
         /**
          Assignment
-         @param other reference to the const_iterator to copy.
+         @param other reference to the _iterator to copy.
          */
-        const_iterator& operator=(const const_iterator &other) {
+        _iterator& operator=(const _iterator &other) {
             base = other.base;
             data = other.data;
             return *this;
@@ -316,34 +316,34 @@ class Set {
         
         /**
          Post-increment operator;
-         @returns const_iterator not incremented;
+         @returns _iterator not incremented;
          */
-        const_iterator operator++(int) {
-            return const_iterator(base, data++);
+        _iterator operator++(int) {
+            return _iterator(base, data++);
         }
         
         /**
          Pre-increment operator;
-         @returns const_iterator incremented;
+         @returns _iterator incremented;
          */
-        const_iterator& operator++() {
+        _iterator& operator++() {
             ++data;
             return *this;
         }
         
         /**
          Post-decrement operator;
-         @returns const_iterator not decremented;
+         @returns _iterator not decremented;
          */
-        const_iterator operator--(int) {
-            return const_iterator(base, data--);
+        _iterator operator--(int) {
+            return _iterator(base, data--);
         }
         
         /**
          Pre-decrement operator;
-         @returns const_iterator decremented;
+         @returns _iterator decremented;
          */
-        const_iterator& operator--() {
+        _iterator& operator--() {
             --data;
             return *this;
         }
@@ -351,27 +351,27 @@ class Set {
         /**
          Advance operator;
          @param offset how much to advance
-         @returns const_iterator not advanced by offset;
+         @returns _iterator not advanced by offset;
          */
-        const_iterator operator+(int offset) {
-            return const_iterator(base, data+offset);
+        _iterator operator+(int offset) {
+            return _iterator(base, data+offset);
         }
         
         /**
          Recede operator;
          @param offset how much to recede
-         @returns const_iterator not receded by offset;
+         @returns _iterator not receded by offset;
          */
-        const_iterator operator-(int offset) {
-            return const_iterator(base, data-offset);
+        _iterator operator-(int offset) {
+            return _iterator(base, data-offset);
         }
         
         /**
          Advance operator;
          @param offset how much to advance
-         @returns const_iterator advanced by offset;
+         @returns _iterator advanced by offset;
          */
-        const_iterator& operator+=(int offset) {
+        _iterator& operator+=(int offset) {
             data += offset;
             return *this;
         }
@@ -379,73 +379,73 @@ class Set {
         /**
          Recede operator;
          @param offset how much to recede
-         @returns const_iterator receded by offset;
+         @returns _iterator receded by offset;
          */
-        const_iterator& operator-=(int offset) {
+        _iterator& operator-=(int offset) {
             data -= offset;
             return *this;
         }
         
         /**
          Difference operator;
-         @param const_iterator reference to the other const_iterator
-         @returns how many elements between this and other const_iterator
+         @param _iterator reference to the other _iterator
+         @returns how many elements between this and other _iterator
          */
-        difference_type operator-(const const_iterator &other) {
+        difference_type operator-(const _iterator &other) {
             difference_type diff = data - other.data;
             return diff;
         }
         
         /**
          Equality operator, check if the two iterators point to the same element
-         @param other reference to the other const_iterator
+         @param other reference to the other _iterator
          */
-        bool operator==(const const_iterator<> &other) const {
+        bool operator==(const _iterator<> &other) const {
             return data == other.data && base == other.base;
         }
         
         /**
          Inequality operator, check iif the two iterators
          don't point to the same element
-         @param other reference to the other const_iterator
+         @param other reference to the other _iterator
          */
-        bool operator!=(const const_iterator<> &other) const {
+        bool operator!=(const _iterator<> &other) const {
             return data != other.data || base != other.base;
         }
         
         /**
-         > operator, check an const_iterator point to an element with an index in the collection
-         that is > the index of the element pointed by the other const_iterator
-         @param other reference to the other const_iterator
+         > operator, check an _iterator point to an element with an index in the collection
+         that is > the index of the element pointed by the other _iterator
+         @param other reference to the other _iterator
          */
-        bool operator>(const const_iterator<> &other) const {
+        bool operator>(const _iterator<> &other) const {
             return data > other.data && base == other.base;
         }
         
         /**
-         >= operator, check an const_iterator point to an element with an index in the collection
-         that is >= the index of the element pointed by the other const_iterator
-         @param other reference to the other const_iterator
+         >= operator, check an _iterator point to an element with an index in the collection
+         that is >= the index of the element pointed by the other _iterator
+         @param other reference to the other _iterator
          */
-        bool operator>=(const const_iterator<> &other) const {
+        bool operator>=(const _iterator<> &other) const {
             return data >= other.data && base == other.base;
         }
         
         /**
-         < operator, check an const_iterator point to an element with an index in the collection
-         that is < the index of the element pointed by the other const_iterator
-         @param other reference to the other const_iterator
+         < operator, check an _iterator point to an element with an index in the collection
+         that is < the index of the element pointed by the other _iterator
+         @param other reference to the other _iterator
          */
-        bool operator<(const const_iterator<> &other) const {
+        bool operator<(const _iterator<> &other) const {
             return data < other.data && base == other.base;
         }
         
         /**
-         <= operator, check an const_iterator point to an element with an index in the collection
-         that is <= the index of the element pointed by the other const_iterator
-         @param other reference to the other const_iterator
+         <= operator, check an _iterator point to an element with an index in the collection
+         that is <= the index of the element pointed by the other _iterator
+         @param other reference to the other _iterator
          */
-        bool operator<=(const const_iterator<> &other) const {
+        bool operator<=(const _iterator<> &other) const {
             return data <= other.data && base == other.base;
         }
         
@@ -453,7 +453,7 @@ class Set {
          Equality operator, check if the two iterators point to the same element.
          @param other reference to the other iterator
          */
-        bool operator==(const const_iterator<false> &other) const {
+        bool operator==(const _iterator<false> &other) const {
             return data == other.data && base == other.base;
         }
         
@@ -462,43 +462,43 @@ class Set {
          don't point to the same element.
          @param other reference to the other iterator
          */
-        bool operator!=(const const_iterator<false> &other) const {
+        bool operator!=(const _iterator<false> &other) const {
             return data != other.data || base != other.base;
         }
         
         /**
-         > operator, check a const_iterator point to an element with an index in the collection
-         that is > the index of the element pointed by the other const_iterator
+         > operator, check a _iterator point to an element with an index in the collection
+         that is > the index of the element pointed by the other _iterator
          @param other reference to the other iterator
          */
-        bool operator>(const const_iterator<false> &other) const {
+        bool operator>(const _iterator<false> &other) const {
             return data > other.data && base == other.base;
         }
         
         /**
-         >= operator, check a const_iterator point to an element with an index in the collection
+         >= operator, check a _iterator point to an element with an index in the collection
          that is >= the index of the element pointed by the other iterator
          @param other reference to the other iterator
          */
-        bool operator>=(const const_iterator<false> &other) const {
+        bool operator>=(const _iterator<false> &other) const {
             return data >= other.data && base == other.base;
         }
         
         /**
-         < operator, check a const_iterator point to an element with an index in the collection
+         < operator, check a _iterator point to an element with an index in the collection
          that is < the index of the element pointed by the other iterator
          @param other reference to the other iterator
          */
-        bool operator<(const const_iterator<false> &other) const {
+        bool operator<(const _iterator<false> &other) const {
             return data < other.data && base == other.base;
         }
         
         /**
-         <= operator, check a const_iterator point to an element with an index in the collection
+         <= operator, check a _iterator point to an element with an index in the collection
          that is <= the index of the element pointed by the other iterator
          @param other reference to the other iterator
          */
-        bool operator<=(const const_iterator<false> &other) const {
+        bool operator<=(const _iterator<false> &other) const {
             return data <= other.data && base == other.base;
         }
     
@@ -508,10 +508,14 @@ class Set {
         
         friend class Set;
         
-        const_iterator(T* base_, T* data_): base(base_), data(data_) {}
-        const_iterator(T* data_): base(data_), data(data_) {}
+        _iterator(T* base_, T* data_): base(base_), data(data_) {}
+        _iterator(T* data_): base(data_), data(data_) {}
         
+       
     };
+    
+    using const_iterator = _iterator<true>;
+    using iterator       = _iterator<false>;
     
 public:
     /**
@@ -620,34 +624,34 @@ public:
     
     /**
      Return the const_iterator, pointing at the first element
-     @returns the const:iterator
+     @returns the const_iterator
      */
-    const_iterator<> begin() const {
-        return const_iterator<>(data);
+    const_iterator begin() const {
+        return const_iterator(data);
     }
     
     /**
      Return the const_iterator, pointing at the element after the last
      @returns the const_iterator
      */
-    const_iterator<> end() const {
-        return const_iterator<>(data, data+last+1);
+    const_iterator end() const {
+        return const_iterator(data, data+last+1);
     }
     
     /**
      Return the iterator, pointing at the first element
      @returns the iterator
      */
-    const_iterator<false> begin() {
-        return const_iterator<false>(data);
+    iterator begin() {
+        return iterator(data);
     }
     
     /**
      Return the iterator, pointing at the last element
      @returns the iterator
      */
-    const_iterator<false> end() {
-        return const_iterator<false>(data, data+last+1);
+    iterator end() {
+        return iterator(data, data+last+1);
     }
 
 private:
