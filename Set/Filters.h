@@ -307,8 +307,10 @@ namespace set { namespace filters {
         size_t seed = 0;
         size_t size = SIZE;
         
-        std::unique_ptr<std::unique_ptr<size_t*[]>[]> table =
-            std::unique_ptr<std::unique_ptr<size_t*[]>[]>(new std::unique_ptr<size_t*[]>[SIZE]);
+        using Row = std::unique_ptr<size_t*[]>;
+        using Table = std::unique_ptr<Row[]>;
+        
+        Table table = Table(new Row[SIZE]);
     };
     
 }}
