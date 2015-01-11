@@ -233,54 +233,13 @@ namespace set { namespace filters {
             move(res.fingerprint, res.h1);
         }
         
-        void move(size_t fingerprint, size_t h1, int depth=0) {
-            auto h2 = h1 ^ hash(fingerprint, size, 900, seed);
-            
-            for (int i=0; i < 4; i++) {
-                if (!table[h1][i]) {
-                    table[h1][i] = new size_t(fingerprint);
-                    
-                    return;
-                }
-            }
-            
-        
-            for (int i=0; i < 4; i++) {
-                if (!table[h2][i]) {
-                    table[h2][i] = new size_t(fingerprint);
-                    
-                    return;
-                }
-            }
-                
-            
-            if (depth == MAX_DEPTH) {
-                throw std::runtime_error("Full");
-            }
-            
-            auto elem = *table[h1][0];
-            *table[h1][0] = fingerprint;
-            
-            move(elem, h1);
-        }
-        
         void remove(const T t) {
             auto res = lookup(t);
             
-            for (int i=0; i < 4; i++)
-                if (table[res.h1][i])
-                    if (*table[res.h1][i] == res.fingerprint) {
-                        table[res.h1][i] = nullptr;
-                        return;
-                    }
-        
-            for (int i=0; i < 4; i++)
-                if (table[res.h2][i])
-                    if (*table[res.h2][i] == res.fingerprint) {
-                        table[res.h2][i] = nullptr;
-                        return;
-                    }
+            if (!res.ptr) return;
             
+            if (remove_fp(res.fingerprint, res.h1)) return;
+            if (remove_fp(res.fingerprint, res.h2)) return;
         }
         
         Query query(const T t) {
@@ -291,6 +250,22 @@ namespace set { namespace filters {
         }
     
     private:
+        void move(size_t fingerprint, size_t h1, int depth=0) {
+            auto h2 = h1 ^ hash(fingerprint, size, 900, seed);
+            
+            if (add_fp(fingerprint, h1)) return;
+            if (add_fp(fingerprint, h2)) return;
+
+            if (depth == MAX_DEPTH) {
+                throw std::runtime_error("Full");
+            }
+            
+            auto elem = *table[h1][0];
+            *table[h1][0] = fingerprint;
+            
+            move(elem, h1);
+        }
+        
         Result lookup(const T t) {
             auto fingerprint = hash(t, size, 1000, seed);
             auto h1 = hash(t, size, 0, seed);
@@ -311,6 +286,29 @@ namespace set { namespace filters {
             res.h2 = h2;
             
             return res;
+        }
+        
+        bool add_fp(size_t fp, size_t h) {
+            for (int i=0; i < 4; i++) {
+                if (!table[h][i]) {
+                    table[h][i] = new size_t(fp);
+                    
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+        
+        bool remove_fp(size_t fp, size_t h) {
+            for (int i=0; i < 4; i++)
+                if (table[h][i])
+                    if (*table[h][i] == fp) {
+                        table[h][i] = nullptr;
+                        return true;
+                    }
+            
+            return false;
         }
         
         size_t seed = 0;
