@@ -23,6 +23,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		E00671231A61FC1B0059BE6F /* Utils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Utils.h; sourceTree = "<group>"; };
+		E00671241A61FC5F0059BE6F /* Exceptions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Exceptions.h; sourceTree = "<group>"; };
+		E00671251A61FCEF0059BE6F /* Filters.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Filters.h; sourceTree = "<group>"; };
+		E00671261A61FE9E0059BE6F /* Set.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Set.h; sourceTree = "<group>"; };
 		E02A28011A5DF5270040D6C4 /* Set */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Set; sourceTree = BUILT_PRODUCTS_DIR; };
 		E02A28041A5DF5270040D6C4 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -58,6 +62,10 @@
 			isa = PBXGroup;
 			children = (
 				E02A28041A5DF5270040D6C4 /* main.cpp */,
+				E00671231A61FC1B0059BE6F /* Utils.h */,
+				E00671241A61FC5F0059BE6F /* Exceptions.h */,
+				E00671251A61FCEF0059BE6F /* Filters.h */,
+				E00671261A61FE9E0059BE6F /* Set.h */,
 			);
 			path = Set;
 			sourceTree = "<group>";
@@ -232,6 +240,7 @@
 				E02A280A1A5DF5270040D6C4 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
