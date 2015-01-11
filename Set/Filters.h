@@ -202,6 +202,13 @@ namespace set { namespace filters {
     
     class CuckooFilter {
         
+        struct Result {
+            size_t* ptr = nullptr;
+            size_t fingerprint;
+            size_t h1;
+            size_t h2;
+        };
+
     public:
         ~CuckooFilter() {
             std::free(table);
@@ -209,12 +216,10 @@ namespace set { namespace filters {
         }
         
         void add(const T t) {
-            if (query(t) == Query::FOUND) return;
+            auto res = lookup(t);
+            if (res.ptr) return;
             
-            auto fingerprint = hash(t, size, 1000, seed);
-            auto h1 = hash(t, size, 0, seed);
-            
-            move(fingerprint, h1);
+            move(res.fingerprint, res.h1);
         }
         
         void move(size_t fingerprint, size_t h1) {
@@ -232,32 +237,41 @@ namespace set { namespace filters {
                 return;
             }
             
-            auto node = *table[h1];
+            auto elem = *table[h1];
             *table[h1] = fingerprint;
             
-            move(node, h1);
+            move(elem, h1);
         }
         
         void remove(const T t) {
-            if (query(t) == Query::NOT_FOUND) return;
+            auto res = lookup(t);
             
-            auto fingerprint = hash(t, size, 1000, seed);
-            auto h1 = hash(t, size, 0, seed);
-            auto h2 = h1 ^ hash(fingerprint, size, 900, seed);
-
-            if (table[h1]) table[h1] = nullptr;
-            if (table[h2]) table[h2] = nullptr;
+            if (table[res.h1]) table[res.h1] = nullptr;
+            if (table[res.h2]) table[res.h2] = nullptr;
         }
         
         Query query(const T t) {
+            auto res = lookup(t);
+            if (res.ptr) return Query::FOUND;
+            
+            return Query::NOT_FOUND;
+        }
+        
+        Result lookup(const T t) {
             auto fingerprint = hash(t, size, 1000, seed);
             auto h1 = hash(t, size, 0, seed);
             auto h2 = h1 ^ hash(fingerprint, size, 900, seed);
             
-            if (table[h1]) return Query::FOUND;
-            if (table[h2]) return Query::FOUND;
+            Result res;
             
-            return Query::NOT_FOUND;
+            if (table[h1]) res.ptr = table[h1];
+            if (table[h2]) res.ptr = table[h2];
+            
+            res.fingerprint = fingerprint;
+            res.h1 = h1;
+            res.h2 = h2;
+            
+            return res;
         }
         
     private:
