@@ -83,10 +83,10 @@ namespace set { namespace filters {
     };
     
     template <typename T,
-    size_t SIZE = 1000,
-    size_t K = 2,
-    size_t STASH_SIZE = 2,
-    size_t MAX_DEPTH = 100>
+              size_t SIZE = 1000,
+              size_t K = 2,
+              size_t STASH_SIZE = 2,
+              size_t MAX_DEPTH = 100>
     class CuckooTable {
         
     public:
@@ -166,12 +166,13 @@ namespace set { namespace filters {
             }
         }
         
-        struct Nest {
+        class Nest {
+        public:
             T t;
             uint i;
             bool full;
             
-            Nest(): full(false) {};
+            Nest(): full(false), t(T()) {};
             
             void insert(const T t_, uint i_) {
                 assert(!full);
