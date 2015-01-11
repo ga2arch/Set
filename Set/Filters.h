@@ -210,7 +210,13 @@ namespace set { namespace filters {
         };
 
     public:
-        CuckooFilter(): table(std::unique_ptr<size_t*[]>(new size_t*[SIZE])) {}
+        CuckooFilter() {
+            for (int i=0; i < SIZE; i++) {
+                table[i] = new size_t*[4];
+                for (int j=0; j < 4; j++)
+                    table[i][j] = nullptr;
+            }
+        }
         
         void add(const T t) {
             auto res = lookup(t);
@@ -222,24 +228,30 @@ namespace set { namespace filters {
         void move(size_t fingerprint, size_t h1, int depth=0) {
             auto h2 = h1 ^ hash(fingerprint, size, 900, seed);
             
-            if (!table[h1]) {
-                table[h1] = new size_t(fingerprint);
-                
-                return;
+            for (int i=0; i < 4; i++) {
+                if (!table[h1][i]) {
+                    table[h1][i] = new size_t(fingerprint);
+                    
+                    return;
+                }
             }
             
-            if (!table[h2]) {
-                table[h1] = new size_t(fingerprint);
-                
-                return;
+        
+            for (int i=0; i < 4; i++) {
+                if (!table[h2][i]) {
+                    table[h2][i] = new size_t(fingerprint);
+                    
+                    return;
+                }
             }
+                
             
             if (depth == MAX_DEPTH) {
                 throw std::runtime_error("Full");
             }
             
-            auto elem = *table[h1];
-            *table[h1] = fingerprint;
+            auto elem = *table[h1][0];
+            *table[h1][0] = fingerprint;
             
             move(elem, h1);
         }
@@ -247,8 +259,22 @@ namespace set { namespace filters {
         void remove(const T t) {
             auto res = lookup(t);
             
-            if (table[res.h1]) table[res.h1] = nullptr;
-            if (table[res.h2]) table[res.h2] = nullptr;
+            if (table[res.h1])
+                for (int i=0; i < 4; i++)
+                    if (table[res.h1][i])
+                        if (*table[res.h1][i] == res.fingerprint) {
+                            table[res.h1][i] = nullptr;
+                            return;
+                        }
+            
+            if (table[res.h2])
+                for (int i=0; i < 4; i++)
+                    if (table[res.h2][i])
+                        if (*table[res.h2][i] == res.fingerprint) {
+                            table[res.h2][i] = nullptr;
+                            return;
+                        }
+            
         }
         
         Query query(const T t) {
@@ -266,8 +292,13 @@ namespace set { namespace filters {
             
             Result res;
             
-            if (table[h1]) res.ptr = table[h1];
-            if (table[h2]) res.ptr = table[h2];
+            for (int i=0; i < 4; i++) {
+                if ((res.ptr = table[h1][i]))
+                    break;
+                
+                if ((res.ptr = table[h2][i]))
+                    break;
+            }
             
             res.fingerprint = fingerprint;
             res.h1 = h1;
@@ -279,7 +310,7 @@ namespace set { namespace filters {
         size_t seed = 0;
         size_t size = SIZE;
         
-        std::unique_ptr<size_t*[]> table;
+        size_t*** table = new size_t**[SIZE];
     };
     
 }}
