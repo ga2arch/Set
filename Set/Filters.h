@@ -256,7 +256,8 @@ namespace set { namespace filters {
             
             return Query::NOT_FOUND;
         }
-        
+    
+    private:
         Result lookup(const T t) {
             auto fingerprint = hash(t, size, 1000, seed);
             auto h1 = hash(t, size, 0, seed);
@@ -274,7 +275,6 @@ namespace set { namespace filters {
             return res;
         }
         
-    private:
         size_t seed = 0;
         size_t size = SIZE;
         
