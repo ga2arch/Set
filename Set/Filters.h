@@ -218,6 +218,14 @@ namespace set { namespace filters {
             }
         }
         
+        ~CuckooFilter() {
+            for (int i=0; i < SIZE; i++) {
+                delete[] table[i];
+            }
+            
+            delete[] table;
+        }
+        
         void add(const T t) {
             auto res = lookup(t);
             if (res.ptr) return;
