@@ -196,8 +196,8 @@ namespace set { namespace filters {
     };
  
     template <typename T,
-    size_t SIZE = 1000,
-    size_t STASH_SIZE = 2,
+    size_t SIZE = 100,
+    size_t BUCKETS = 4,
     size_t MAX_DEPTH = 100>
     
     class CuckooFilter {
@@ -212,18 +212,11 @@ namespace set { namespace filters {
     public:
         CuckooFilter() {
             for (int i=0; i < SIZE; i++) {
-                table[i] = new size_t*[4];
-                for (int j=0; j < 4; j++)
+                table[i] = std::unique_ptr<size_t*[]>(new size_t*[BUCKETS]);
+                
+                for (int j=0; j < BUCKETS; j++)
                     table[i][j] = nullptr;
             }
-        }
-        
-        ~CuckooFilter() {
-            for (int i=0; i < SIZE; i++) {
-                delete[] table[i];
-            }
-            
-            delete[] table;
         }
         
         void add(const T t) {
@@ -244,14 +237,14 @@ namespace set { namespace filters {
         
         Query query(const T t) {
             auto res = lookup(t);
-            if (res.ptr) return Query::FOUND;
+            if (res.ptr) return Query::MAYBE;
             
             return Query::NOT_FOUND;
         }
     
     private:
         void move(size_t fingerprint, size_t h1, int depth=0) {
-            auto h2 = h1 ^ hash(fingerprint, size, 900, seed);
+            auto h2 = (h1 ^ hash(fingerprint, size, 900, seed)) % SIZE;
             
             if (add_fp(fingerprint, h1)) return;
             if (add_fp(fingerprint, h2)) return;
@@ -269,11 +262,11 @@ namespace set { namespace filters {
         Result lookup(const T t) {
             auto fingerprint = hash(t, size, 1000, seed);
             auto h1 = hash(t, size, 0, seed);
-            auto h2 = h1 ^ hash(fingerprint, size, 900, seed);
+            auto h2 = (h1 ^ hash(fingerprint, size, 900, seed)) % SIZE;
             
             Result res;
             
-            for (int i=0; i < 4; i++) {
+            for (int i=0; i < BUCKETS; i++) {
                 if ((res.ptr = table[h1][i]))
                     break;
                 
@@ -289,7 +282,7 @@ namespace set { namespace filters {
         }
         
         bool add_fp(size_t fp, size_t h) {
-            for (int i=0; i < 4; i++) {
+            for (int i=0; i < BUCKETS; i++) {
                 if (!table[h][i]) {
                     table[h][i] = new size_t(fp);
                     
@@ -301,7 +294,7 @@ namespace set { namespace filters {
         }
         
         bool remove_fp(size_t fp, size_t h) {
-            for (int i=0; i < 4; i++)
+            for (int i=0; i < BUCKETS; i++)
                 if (table[h][i])
                     if (*table[h][i] == fp) {
                         table[h][i] = nullptr;
@@ -314,7 +307,8 @@ namespace set { namespace filters {
         size_t seed = 0;
         size_t size = SIZE;
         
-        size_t*** table = new size_t**[SIZE];
+        std::unique_ptr<std::unique_ptr<size_t*[]>[]> table =
+            std::unique_ptr<std::unique_ptr<size_t*[]>[]>(new std::unique_ptr<size_t*[]>[SIZE]);
     };
     
 }}

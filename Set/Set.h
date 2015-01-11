@@ -27,7 +27,7 @@ namespace set {
      @param T the type of the values inside the Set
      @param F the filter to use, defaulted to BloomFilter
      */
-    template <typename T, typename F = CuckooTable<T>>
+    template <typename T, typename F = BaseFilter<T>>
     class Set {
         
         template <bool is_const = true>

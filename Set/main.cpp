@@ -91,11 +91,4 @@ int main(int argc, const char * argv[]) {
     
     assert(std::equal(f.begin(), f.end(), l.begin()));
     std::cout << "PASSED\n";
-    
-    
-    CuckooFilter<int> cf;
-    
-    cf.add(10);
-    
-    std::cout << (cf.query(10) == Query::FOUND ? "1" : "0");
 }
