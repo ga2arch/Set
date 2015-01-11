@@ -166,13 +166,12 @@ namespace set { namespace filters {
             }
         }
         
-        class Nest {
-        public:
+        struct Nest {
             T t;
             uint i;
             bool full;
             
-            Nest(): full(false), t(T()) {};
+            Nest(): full(false), i(0), t(T()) {};
             
             void insert(const T t_, uint i_) {
                 assert(!full);
