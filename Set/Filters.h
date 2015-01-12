@@ -83,6 +83,14 @@ namespace set { namespace filters {
         std::unique_ptr<uint8_t[]> bloom;
     };
     
+    
+    /**
+     Class provvide implementation for a HashTable based on Cuckoo Hashing, allows for 
+     ammortized O(1) fast set element query.
+     @param <#parameter#>
+     @returns <#retval#>
+     @exception <#throws#>
+     */
     template <typename T,
               size_t SIZE = 1000,
               size_t K = 2,
