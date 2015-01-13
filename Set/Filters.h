@@ -87,7 +87,11 @@ namespace set { namespace filters {
     /**
      Class provvide implementation for a HashTable based on Cuckoo Hashing, allows for 
      ammortized O(1) fast set element query.
-     @param <#parameter#>
+     @param SIZE the size of the table
+     @param K the number of hash functions
+     @param STASH_SIZE the size of the stash
+     @param MAX_DEPTH the depth cutoff
+     @param FIXED if the table is fixed
      @returns <#retval#>
      @exception <#throws#>
      */
