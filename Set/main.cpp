@@ -74,21 +74,28 @@ int main(int argc, const char * argv[]) {
     std::cout << "Test copy constructor: ";
     auto c = s;
     
-    assert(std::equal(c.begin(), c.end(), s.begin()));
+    assert(std::equal(s.begin(), s.end(), c.begin()));
     std::cout << "PASSED\n";
     
-    std::cout << "Test constructor from iterators: ";
+    std::cout << "Test constructor from iterators of vector: ";
     l = {4,4,8,9,10};
     Set<int> m(l.begin(), l.end());
     l = {4,8,9,10};
 
-    assert(std::equal(m.begin(), m.end(), s.begin()));
+    assert(std::equal(l.begin(), l.end(), m.begin()));
     std::cout << "PASSED\n";
     
     std::cout << "Test filter out: ";
     auto f = filter_out(s, [](int x) { return x == 4; });
     l = {8,9,10,5};
     
-    assert(std::equal(f.begin(), f.end(), l.begin()));
+    assert(std::equal(l.begin(), l.end(), f.begin()));
     std::cout << "PASSED\n";
+    
+    std::cout << "Test constructor from iterators of set: ";
+    Set<int> m1(s.begin(), s.end());
+    
+    assert(std::equal(s.begin(), s.end(), m1.begin()));
+    std::cout << "PASSED\n";
+
 }

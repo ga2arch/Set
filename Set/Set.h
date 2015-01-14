@@ -301,7 +301,8 @@ namespace set {
             size = set_.size;
             alloc(size);
             
-            std::copy(set_.begin(), set_.end(), begin());
+            for (auto e: set_)
+                insert(e);
         }
         
         /**
@@ -483,7 +484,7 @@ namespace set {
     template <typename T, typename F, typename P>
     Set<T,F> filter_out(const Set<T,F>& s, P p) {
         Set<T,F> n;
-        std::copy_if(s.begin(), s.end(), n.begin(), p);
+        std::remove_copy_if(s.begin(), s.end(), n.begin(), p);
         
         return n;
     }
