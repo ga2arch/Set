@@ -286,9 +286,9 @@ namespace set {
         
     public:
         /**
-         Default constructor
+         Constructor
          */
-        Set() =default;
+        Set() {};
         
         /**
          Copy constructor, performs a deep copy of all the elements in the other Set
@@ -296,8 +296,10 @@ namespace set {
          @returns class instance
          */
         Set(const Set& set_) {
-            for (auto e: set_)
-                insert(e);
+            size = set_.size;
+            alloc(size);
+            
+            std::copy(set_.begin(), set_.end(), begin());
         }
         
         /**
