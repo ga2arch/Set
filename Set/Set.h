@@ -399,7 +399,7 @@ namespace set {
                     filter.remove(t);
                     std::rotate(begin()+i, begin()+i+1, end());
                     
-                    --last;
+                    if (--last < size/2) shrink();
                     return;
                 }
             }
@@ -448,6 +448,11 @@ namespace set {
             if (size) size *= 2;
             else size = 1;
             
+            alloc(size);
+        }
+        
+        void shrink() {
+            size /= 1.5;
             alloc(size);
         }
         
