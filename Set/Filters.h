@@ -92,8 +92,6 @@ namespace set { namespace filters {
      @param STASH_SIZE the size of the stash
      @param MAX_DEPTH the depth cutoff
      @param FIXED if the table is fixed
-     @returns <#retval#>
-     @exception <#throws#>
      */
     template <typename T,
               size_t SIZE = 1000,
@@ -107,6 +105,17 @@ namespace set { namespace filters {
         CuckooTable(): table(std::unique_ptr<Nest[]>(new Nest[SIZE]())),
                        stash(std::unique_ptr<T[]>(new T[STASH_SIZE]())) {}
         
+        /**
+         Add an element to the hashtable, it hashes the element K times, each time 
+         check if the nest at position given by the hash is free, if it is, puts the 
+         element here and returns, if not, check the next nest, if there isn't an empty 
+         nest, takes a random value between 0 <= K < 0, hashes the element with that function,
+         kicks the element at related nest, insert the element, and recurse add with the kicked element.
+         @param t the element to add
+         @param i the last nest checked
+         @param depth the depth cutoff for the recursion
+         @exception runtime_error if the table is fixed and full.
+         */
         void add(const T t, int i=0, int depth=0) {
             if (query(t) == Query::FOUND) return;
             
