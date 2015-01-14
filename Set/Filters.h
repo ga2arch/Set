@@ -150,6 +150,10 @@ namespace set { namespace filters {
             add(node.t, node.i, ++depth);
         }
         
+        /**
+         Search K-nests for the element to remove.
+         @param t the element to remove
+         */
         void remove(const T t) {
             if (query(t) == Query::NOT_FOUND) return;
             
@@ -164,6 +168,11 @@ namespace set { namespace filters {
             }
         }
         
+        /**
+         Search K-nests for the element to remove.
+         @param t the element
+         @returns the Query result
+         */
         Query query(const T t) {
             for (int k=0; k < K; k++) {
                 auto h = hash(t, size, k, seed);
