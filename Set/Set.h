@@ -328,7 +328,7 @@ namespace set {
             for (;begin != end; begin++)
                 try {
                     insert(*begin);
-                } catch (std::runtime_error) {
+                } catch (exceptions::already_in) {
                     
                 }
         }
