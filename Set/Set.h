@@ -306,6 +306,16 @@ namespace set {
         }
         
         /**
+         Move constructor
+         */
+        Set(Set&& set_) {
+            size = set_.size;
+            last = set_.last;
+            
+            data = std::move(set_.data);
+        }
+        
+        /**
          Destructor, it frees up the memory used.
          */
         ~Set() {
