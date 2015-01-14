@@ -232,6 +232,15 @@ namespace set { namespace filters {
         std::unique_ptr<Nest[]> table;
     };
  
+    
+    /**
+     Class to implement a CuckooFilter, a lot similar to the Cuckoo Hash Table, but 
+     instead of storing the element, it stores the fingerprint (just another hash) and 
+     makes use of partial hashing for easily retrieve the second hash from the first.
+     @param SIZE the size of the filter
+     @param BUCKETS the number of buckets to use.
+     @param MAX_DEPTH depth cutoff in case of eviction.
+     */
     template <typename T,
     size_t SIZE = 100,
     size_t BUCKETS = 4,
