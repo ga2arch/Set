@@ -321,6 +321,7 @@ namespace set {
          */
         template <typename Iterator>
         Set(Iterator begin, Iterator end) {
+            size = end - begin;
             alloc(size);
             
             for (;begin != end; begin++)
