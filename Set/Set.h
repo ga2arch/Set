@@ -481,9 +481,9 @@ namespace set {
      @param p the function or lambda to use to filter the elements
      @returns the new Set
      */
-    template <typename C, typename P>
-    C filter_out(const C& c, P p) {
-        C n_c;
+    template <typename T, typename F, typename P>
+    Set<T,F> filter_out(const Set<T,F>& c, P p) {
+        Set<T,F> n_c;
         std::remove_copy_if(c.begin(), c.end(), n_c.begin(), p);
         
         return n_c;
