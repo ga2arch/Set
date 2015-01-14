@@ -288,7 +288,9 @@ namespace set {
         /**
          Constructor
          */
-        Set() {};
+        Set() {
+            alloc(size);
+        };
         
         /**
          Copy constructor, performs a deep copy of all the elements in the other Set
@@ -319,6 +321,8 @@ namespace set {
          */
         template <typename Iterator>
         Set(Iterator begin, Iterator end) {
+            alloc(size);
+            
             for (;begin != end; begin++)
                 try {
                     insert(*begin);
@@ -465,7 +469,7 @@ namespace set {
         F filter;
         T* data = nullptr;
         int last = -1;
-        size_t size = 0;
+        size_t size = 1;
     };
     
     /**
@@ -478,12 +482,7 @@ namespace set {
     template <typename T, typename F, typename P>
     Set<T,F> filter_out(const Set<T,F>& s, P p) {
         Set<T,F> n;
-        
-        for (auto e: s) {
-            if (!p(e)) {
-                n.insert(e);
-            }
-        }
+        std::copy_if(s.begin(), s.end(), n.begin(), p);
         
         return n;
     }
