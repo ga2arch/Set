@@ -190,6 +190,11 @@ namespace set { namespace filters {
         }
         
     private:
+        /**
+         Rebuilds the table, increasing the size and using the last element 
+         hash as the new seed of the hash functions.
+         @param seed_ the new seed
+         */
         void rebuild(size_t seed_) {
             auto old_table = std::move(table);
             auto old_size = size;
@@ -206,6 +211,9 @@ namespace set { namespace filters {
             }
         }
         
+        /**
+         Simple struct to rappresent each slot in the hashtable
+         */
         struct Nest {
             T t;
             uint i;
