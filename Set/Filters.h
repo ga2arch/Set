@@ -217,7 +217,7 @@ namespace set { namespace filters {
         struct Nest {
             T t;
             uint i;
-            bool full;
+            uint full : 1;
             
             Nest(): full(false), i(0), t(T()) {};
             
@@ -270,12 +270,8 @@ namespace set { namespace filters {
         CuckooFilter() {
             srand (static_cast<int>(time(NULL)));
 
-            for (int i=0; i < SIZE; i++) {
-                table[i] = Row(new Fp[BUCKETS]);
-                
-                for (int j=0; j < BUCKETS; j++)
-                    table[i][j] = nullptr;
-            }
+            for (int i=0; i < SIZE; i++)
+                table[i] = Row(new Fp[BUCKETS]{nullptr});
         }
  
         void add(const T t) {
@@ -356,11 +352,11 @@ namespace set { namespace filters {
         
         bool remove_fp(size_t fp, size_t h) {
             for (int i=0; i < BUCKETS; i++)
-                if (table[h][i])
-                    if (*table[h][i] == fp) {
-                        table[h][i] = nullptr;
-                        return true;
-                    }
+                if (table[h][i] && *table[h][i] == fp) {
+                    table[h][i] = nullptr;
+                    
+                    return true;
+                }
             
             return false;
         }
