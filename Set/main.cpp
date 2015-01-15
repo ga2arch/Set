@@ -18,7 +18,7 @@
 using namespace set;
 
 int main(int argc, const char * argv[]) {
-    Set<int, CuckooFilter<int>> s;
+    Set<int> s;
     std::vector<int> l{4,5,8,9,10};
     
     std::cout << "Test insertion: ";

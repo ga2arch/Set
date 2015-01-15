@@ -441,7 +441,7 @@ namespace set {
         
     private:
         /**
-         Grows the size of the buffer exponetially
+         Grows the size of the buffer exponentially
          @exception bad_alloc if the allocation isn't successfull
          */
         void grow() {
@@ -451,6 +451,10 @@ namespace set {
             alloc(size);
         }
         
+        /**
+         Shrink the size of the buffer exponentially
+         @exception bad_alloc if the allocation isn't successfull
+         */
         void shrink() {
             size /= 1.5;
             alloc(size);

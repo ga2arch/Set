@@ -103,7 +103,10 @@ namespace set { namespace filters {
         
     public:
         CuckooTable(): table(std::unique_ptr<Nest[]>(new Nest[SIZE]())),
-                       stash(std::unique_ptr<T[]>(new T[STASH_SIZE]())) {}
+                       stash(std::unique_ptr<T[]>(new T[STASH_SIZE]())) {
+        
+            srand (static_cast<int>(time(NULL)));
+        }
         
         /**
          Add an element to the hashtable, it hashes the element K times, each time 
