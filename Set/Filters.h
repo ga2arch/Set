@@ -164,7 +164,7 @@ namespace set { namespace filters {
                 auto h = hash(t, size, k, seed);
                 
                 if (table[h].t == t) {
-                    table[h] = Nest();
+                    table[h].full = 0;
                     
                     return;
                 }
@@ -219,11 +219,11 @@ namespace set { namespace filters {
             uint i;
             uint full : 1;
             
-            Nest(): full(false), i(0), t(T()) {};
+            Nest(): full(0), i(0), t(T()) {};
             
             void insert(const T t_, uint i_) {
                 assert(!full);
-                full = true;
+                full = 1;
                 
                 t = t_;
                 i = i_;
@@ -259,8 +259,28 @@ namespace set { namespace filters {
     
     class CuckooFilter {
         
+        struct Nest {
+            uint full : 1;
+            size_t fingerprint;
+            
+            Nest(): full(0) {}
+            
+            void insert(size_t fp) {
+                assert(!full);
+                full = 1;
+                
+                fingerprint = fp;
+            }
+            
+            void swap(size_t fp) {
+                assert(full);
+                
+                fingerprint = fp;
+            }
+        };
+        
         struct Result {
-            size_t* ptr = nullptr;
+            bool found = false;
             size_t fingerprint;
             size_t h1;
             size_t h2;
@@ -269,14 +289,15 @@ namespace set { namespace filters {
     public:
         CuckooFilter() {
             srand (static_cast<int>(time(NULL)));
-
-            for (int i=0; i < SIZE; i++)
-                table[i] = Row(new Fp[BUCKETS]{nullptr});
+            
+            for (int i=0; i < SIZE; i++) {
+                table[i] = Row(new Nest[BUCKETS]());
+            }
         }
  
         void add(const T t) {
             auto res = lookup(t);
-            if (res.ptr) return;
+            if (res.found) return;
             
             move(res.fingerprint, res.h1);
         }
@@ -284,7 +305,7 @@ namespace set { namespace filters {
         void remove(const T t) {
             auto res = lookup(t);
             
-            if (!res.ptr) return;
+            if (!res.found) return;
             
             if (remove_fp(res.fingerprint, res.h1)) return;
             if (remove_fp(res.fingerprint, res.h2)) return;
@@ -292,7 +313,7 @@ namespace set { namespace filters {
         
         Query query(const T t) {
             auto res = lookup(t);
-            if (res.ptr) return Query::MAYBE;
+            if (res.found) return Query::MAYBE;
             
             return Query::NOT_FOUND;
         }
@@ -310,10 +331,10 @@ namespace set { namespace filters {
             auto row = rand() % 2 == 0 ? h1 : h2;
             auto col = rand() % 4;
             
-            auto elem = *table[row][col];
-            *table[row][col] = fingerprint;
+            auto elem = table[row][col].fingerprint;
+            table[row][col].swap(fingerprint);
             
-            move(elem, h1);
+            move(elem, row);
         }
         
         Result lookup(const T t) {
@@ -322,13 +343,21 @@ namespace set { namespace filters {
             auto h2 = (h1 ^ hash(fingerprint, size, 900, seed)) % SIZE;
             
             Result res;
-            
             for (int i=0; i < BUCKETS; i++) {
-                if ((res.ptr = table[h1][i].get()))
-                    break;
+                auto& n1 = table[h1][i];
                 
-                if ((res.ptr = table[h2][i].get()))
+                if (n1.full && n1.fingerprint == fingerprint) {
+                    res.found = true;
                     break;
+                }
+
+                auto& n2 = table[h2][i];
+                
+                if (n2.full && n2.fingerprint == fingerprint) {
+                    res.found = true;
+                    break;
+                }
+
             }
             
             res.fingerprint = fingerprint;
@@ -340,8 +369,8 @@ namespace set { namespace filters {
         
         bool add_fp(size_t fp, size_t h) {
             for (int i=0; i < BUCKETS; i++) {
-                if (!table[h][i]) {
-                    table[h][i] = std::unique_ptr<size_t>(new size_t(fp));
+                if (!table[h][i].full) {
+                    table[h][i].insert(fp);
                     
                     return true;
                 }
@@ -352,8 +381,8 @@ namespace set { namespace filters {
         
         bool remove_fp(size_t fp, size_t h) {
             for (int i=0; i < BUCKETS; i++)
-                if (table[h][i] && *table[h][i] == fp) {
-                    table[h][i] = nullptr;
+                if (table[h][i].full && table[h][i].fingerprint == fp) {
+                    table[h][i].full = 0;
                     
                     return true;
                 }
@@ -364,8 +393,7 @@ namespace set { namespace filters {
         size_t seed = 0;
         size_t size = SIZE;
         
-        using Fp    = std::unique_ptr<size_t>;
-        using Row   = std::unique_ptr<Fp[]>;
+        using Row   = std::unique_ptr<Nest[]>;
         using Table = std::unique_ptr<Row[]>;
         
         Table table = Table(new Row[SIZE]);
