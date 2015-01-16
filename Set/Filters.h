@@ -223,7 +223,7 @@ namespace set { namespace filters {
             
             void insert(const T t_, uint i_) {
                 assert(!full);
-                full = 1;
+                full = true;
                 
                 t = t_;
                 i = i_;
@@ -259,6 +259,10 @@ namespace set { namespace filters {
     
     class CuckooFilter {
         
+        /**
+         Nest structure, stores the fingerprint and 1 byte as flag to indicate
+         if the nest if full or empty.
+         */
         struct Nest {
             uint full : 1;
             size_t fingerprint;
