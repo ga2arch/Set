@@ -283,6 +283,9 @@ namespace set { namespace filters {
             }
         };
         
+        /**
+         Struct returned by the lookup function.
+         */
         struct Result {
             bool found = false;
             size_t fingerprint;
