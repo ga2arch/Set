@@ -397,6 +397,8 @@ namespace set {
                     filter.remove(t);
                     std::rotate(begin()+i, begin()+i+1, end());
                     
+                    data[last].~T();
+                    
                     if (--last < size/2) shrink();
                     return;
                 }
