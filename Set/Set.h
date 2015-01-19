@@ -270,14 +270,13 @@ namespace set {
             }
             
         private:
-            pointer base;
-            pointer data;
+            T* base;
+            T* data;
             
             friend class Set;
             
             _iterator(T* base_, T* data_): base(base_), data(data_) {}
             _iterator(T* data_): base(data_), data(data_) {}
-            
             
         };
         
@@ -301,7 +300,7 @@ namespace set {
             size = set_.size;
             alloc(size);
             
-            for (auto e: set_)
+            for (const auto e: set_)
                 insert(e);
         }
         
@@ -335,7 +334,7 @@ namespace set {
             size = end - begin;
             alloc(size);
             
-            for (;begin != end; begin++)
+            for (; begin != end; begin++)
                 try {
                     insert(*begin);
                 } catch (exceptions::already_in) {
@@ -479,7 +478,7 @@ namespace set {
          @return output stream
          */
         friend std::ostream& operator<<(std::ostream &os, const Set &set) {
-            for (auto e: set) {
+            for (const auto e: set) {
                 os << e << " ";
             }
             
