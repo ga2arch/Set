@@ -17,8 +17,8 @@
 
 using namespace set;
 
-int main(int argc, const char * argv[]) {
-    Set<int, CuckooFilter<int>> s;
+void test_set() {
+    Set<int> s;
     std::vector<int> l{4,5,8,9,10};
     
     std::cout << "Test insertion: ";
@@ -81,7 +81,7 @@ int main(int argc, const char * argv[]) {
     l = {4,4,8,9,10};
     Set<int> m(l.begin(), l.end());
     l = {4,8,9,10};
-
+    
     assert(std::equal(l.begin(), l.end(), m.begin()));
     std::cout << "PASSED\n";
     
@@ -97,5 +97,9 @@ int main(int argc, const char * argv[]) {
     
     assert(std::equal(s.begin(), s.end(), m1.begin()));
     std::cout << "PASSED\n";
+}
 
+int main(int argc, const char * argv[]) {
+    std::cout << "======== SET TESTS ========" << std::endl;
+    test_set();
 }

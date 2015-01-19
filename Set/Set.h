@@ -350,7 +350,6 @@ namespace set {
          @exception assert exception if p is outside the valide range
          */
         const T& operator[](int p) const {
-            assert(p >= 0 && p <= last);
             return data[p];
         }
         
