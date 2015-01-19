@@ -502,7 +502,10 @@ namespace set {
     template <typename T, typename F, typename P>
     Set<T,F> filter_out(const Set<T,F>& c, P p) {
         Set<T,F> n_c;
-        std::remove_copy_if(c.begin(), c.end(), n_c.begin(), p);
+        
+        for (auto e: c)
+            if (!p(e))
+                n_c.insert(e);
         
         return n_c;
     }
