@@ -165,6 +165,7 @@ namespace set { namespace filters {
                 
                 if (table[h].t == t) {
                     table[h].full = 0;
+                    table[h].~T();
                     
                     return;
                 }
