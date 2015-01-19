@@ -501,14 +501,14 @@ namespace set {
      @returns the new Set
      */
     template <typename T, typename F, typename P>
-    Set<T,F> filter_out(const Set<T,F>& c, P p) {
-        Set<T,F> n_c;
+    Set<T,F> filter_out(const Set<T,F>& s, P p) {
+        Set<T,F> n_s;
         
-        for (auto e: c)
+        for (const auto e: s)
             if (!p(e))
-                n_c.insert(e);
+                n_s.insert(e);
         
-        return n_c;
+        return n_s;
     }
 }
 
