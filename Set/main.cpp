@@ -18,13 +18,13 @@
 using namespace set;
 
 void test_set() {
-    Set<int> s;
+    Set<int, CuckooTable<int>> s;
     std::vector<int> l{4,5,8,9,10};
     
     std::cout << "Test deletion empty set:";
     auto error = false;
     try {
-        s.remove(30);
+        s.remove(0);
     } catch (exceptions::not_found) {
         error = true;
     }

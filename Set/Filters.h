@@ -165,7 +165,6 @@ namespace set { namespace filters {
                 
                 if (table[h].t == t) {
                     table[h].full = 0;
-                    table[h].~T();
                     
                     return;
                 }
@@ -181,7 +180,7 @@ namespace set { namespace filters {
             for (int k=0; k < K; k++) {
                 auto h = hash(t, size, k, seed);
                 
-                if (table[h].t == t) return Query::FOUND;
+                if (table[h].full && table[h].t == t) return Query::FOUND;
             }
             
             for (int i=0; i < STASH_SIZE; i++)
@@ -233,6 +232,11 @@ namespace set { namespace filters {
             void swap(const T t_) {
                 assert(full);
                 t = t_;
+            }
+            
+            void clear() {
+                full = 0;
+                t.~T();
             }
         };
         
