@@ -164,7 +164,7 @@ namespace set { namespace filters {
                 auto h = hash(t, size, k, seed);
                 
                 if (table[h].t == t) {
-                    table[h].full = 0;
+                    table[h].clear();
                     
                     return;
                 }
