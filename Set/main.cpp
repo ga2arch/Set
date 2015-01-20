@@ -21,6 +21,17 @@ void test_set() {
     Set<int> s;
     std::vector<int> l{4,5,8,9,10};
     
+    std::cout << "Test deletion empty set:";
+    auto error = false;
+    try {
+        s.remove(30);
+    } catch (exceptions::not_found) {
+        error = true;
+    }
+    
+    assert(error);
+    std::cout << "PASSED\n";
+    
     std::cout << "Test insertion: ";
     s.insert(4);
     s.insert(5);
@@ -50,7 +61,7 @@ void test_set() {
     std::cout << "PASSED\n";
     
     std::cout << "Test insertion of already inserted element: ";
-    bool error = false;
+    error = false;
     try {
         s.insert(4);
     } catch (exceptions::already_in) {
