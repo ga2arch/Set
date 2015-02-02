@@ -287,9 +287,7 @@ namespace set {
         /**
          Constructor
          */
-        Set() {
-            alloc(size);
-        };
+        Set() =default;
         
         /**
          Copy constructor, performs a deep copy of all the elements in the other Set
@@ -313,15 +311,7 @@ namespace set {
             
             data = std::move(set_.data);
         }
-        
-        /**
-         Destructor, it frees up the memory used.
-         */
-        ~Set() {
-            if (data) std::free(data);
-            data = nullptr;
-        }
-        
+ 
         /**
          Constructor from generic iterators
          
@@ -412,7 +402,7 @@ namespace set {
          @returns the const_iterator
          */
         const_iterator begin() const {
-            return const_iterator(data);
+            return const_iterator(data.get());
         }
         
         /**
@@ -420,7 +410,7 @@ namespace set {
          @returns the const_iterator
          */
         const_iterator end() const {
-            return const_iterator(data, data+last+1);
+            return const_iterator(data.get(), data.get()+last+1);
         }
         
     private:
@@ -429,7 +419,7 @@ namespace set {
          @returns the iterator
          */
         iterator ibegin() {
-            return iterator(data);
+            return iterator(data.get());
         }
         
         /**
@@ -437,7 +427,7 @@ namespace set {
          @returns the iterator
          */
         iterator iend() {
-            return iterator(data, data+last+1);
+            return iterator(data.get(), data.get()+last+1);
         }
         
         /**
@@ -466,11 +456,9 @@ namespace set {
          @exception bad_alloc if the allocation isn't successfull
          */
         void alloc(size_t s) {
-            auto mem = std::realloc(data, s*sizeof(T));
-            if (!mem)
-                throw std::bad_alloc();
-            
-            data = static_cast<T*>(mem);
+            auto mem = std::unique_ptr<T[]>(new T[s]);
+            std::copy(begin(), end(), mem.get());
+            data.swap(mem);
         }
         
         /**
@@ -488,9 +476,9 @@ namespace set {
         }
         
         F filter;
-        T* data = nullptr;
         int last = -1;
         size_t size = 1;
+        std::unique_ptr<T[]> data = std::unique_ptr<T[]>(new T[size]);
     };
     
     /**
