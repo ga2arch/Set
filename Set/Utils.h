@@ -31,7 +31,7 @@ namespace set { namespace utils {
      0 <= hash < SIZE.
      Uses only two hash function to simulate any number of hash functions
      based on the paper Less Hashing, Same Performance
-     (http://www.eecs.harvard.edu/~kirsch/pubs/bbbf/esa06.pdf)
+     (https://www.eecs.harvard.edu/~michaelm/postscripts/tr-02-05.pdf)
      @param t the element to hash
      @param i the i-th hash function
      @returns int the hash
